@@ -2,18 +2,19 @@
 
 import React, { useState,useEffect } from "react";
 import { Dropdown } from "react-bootstrap";
-import { Card, Form, Table, Button } from "react-bootstrap";
+import { Card, Form, Table, Button, Modal } from "react-bootstrap";
 import SearchForm from "./SearchForm";
-import Pagination from "./Pagination";
+import Pagination from "@/components/Apps/Contacts/Pagination";
+import { useRouter } from "next/navigation";
 
 import { returnTripType } from "@/commons/commonFunctions,";
 import AssignDriver from "./assignDriver";
 import AlertMessage from "@/components/AlertMessage/AlertMessage";
 import useAxios from '@/network/useAxios';
 import ActionSheet from "@/components/ActionSheet/ActionSheet";
-import { BookingService } from '@/urls/urls';
+import {bookingService, cityAutocomplete} from '@/urls/urls';
 
-const LeadsTable = ({data, setSelected, deleteRequested,status,setStatus,changeStatus,setIsChange,setIsDeleted,ActionResponse}) => {
+const LeadsTable = ({data, setSelected, deleteRequested,status,setStatus,changeStatus,setIsChange,setIsDeleted,ActionResponse, currentPage, totalPages, onPageChange, totalItems, itemsPerPage}) => {
   // Modal
   const [isShowModal, setShowModal] = useState("false");
   const [alert, setAlert] = useState({ message: "", variant: "" });
@@ -30,17 +31,41 @@ const LeadsTable = ({data, setSelected, deleteRequested,status,setStatus,changeS
     trip_km: 0,
     fare: '',
     buy_cost: '',
+    search: "",
+    date: "",
+    status: ""
   });
+
+  const [pickupSuggestions, setPickupSuggestions] = useState([]);
+  const [dropSuggestions, setDropSuggestions] = useState([]);
+  const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
+  const [showDropSuggestions, setShowDropSuggestions] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeField, setActiveField] = useState(null);
+
+  const [
+    cityAutocompleteResponse,
+    cityAutocompleteError,
+    cityAutocompleteLoading,
+    cityAutocompleteSubmit,
+  ] = useAxios();
+
+  const router = useRouter();
 
   const handleToggleShowModal = () => {
     setShowModal(!isShowModal);
   };
+const [actionResponse,
+  actionError,
+  actionLoading,
+  actionSubmit,
+]=useAxios();
 
   const [
-    actionResponse,
-    actionError,
-    actionLoading,
-    actionSubmit,
+    createBookingResponse,
+    createBookingError,
+    createBookingLoading,
+    createBookingSubmit,
   ]=useAxios();
 const [isModalOpenAssignDriver,setIsModalOpenAssignDriver] = useState(false)
 const [isModalOpen,setIsModalOpen] = useState(false)
@@ -86,35 +111,95 @@ else if (action == 'delete')
       [name]: value
     }));
   };
+useEffect(()=>{
+  if (createBookingResponse['message']){
+    setAlert({ message: createBookingResponse['message'], variant: "success" });
+    handleToggleShowModal();
+    setFormData({
+      customer_name: '',
+      customer_number: '',
+      customer_email: '',
+      pickup_location: '',
+      drop_location: '',
+      trip_type: '',
+      pickup_date: '',
+      drop_date: '',
+      trip_km: 0,
+      fare: '',
+      buy_cost: '',
+    });
+  }
+},[createBookingResponse])
+
+useEffect(() => {
+  if (cityAutocompleteResponse?.cities) {
+    if (activeField === 'pickup_location') {
+      setPickupSuggestions(cityAutocompleteResponse.cities);
+      setShowPickupSuggestions(true);
+    } else if (activeField === 'drop_location') {
+      setDropSuggestions(cityAutocompleteResponse.cities);
+      setShowDropSuggestions(true);
+    }
+  }
+}, [cityAutocompleteResponse, activeField]);
+
+const handleLocationChange = (e) => {
+  const { name, value } = e.target;
+  setFormData(prev => ({
+    ...prev,
+    [name]: value
+  }));
+  setActiveField(name);
+
+  if (value.length >= 2) {
+    cityAutocompleteSubmit(cityAutocomplete({search: value}));
+  } else {
+    if (name === 'pickup_location') {
+      setPickupSuggestions([]);
+      setShowPickupSuggestions(false);
+    } else {
+      setDropSuggestions([]);
+      setShowDropSuggestions(false);
+    }
+  }
+};
+
+const handleSuggestionClick = (suggestion, field) => {
+  setFormData(prev => ({
+    ...prev,
+    [field]: suggestion
+  }));
+  setActiveField(null);
+  if (field === 'pickup_location') {
+    setShowPickupSuggestions(false);
+  } else {
+    setShowDropSuggestions(false);
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const response = await BookingService.createBooking(formData);
+  
+    if (formData.pickup_location === formData.drop_location) {
+      setAlert({ message: "Pickup and drop locations cannot be the same", variant: "danger" });
+      return;
+    }
 
-      if (response.message) {
-        setAlert({ message: response.message, variant: "success" });
-        handleToggleShowModal();
-        // Reset form
-        setFormData({
-          customer_name: '',
-          customer_number: '',
-          customer_email: '',
-          pickup_location: '',
-          drop_location: '',
-          trip_type: '',
-          pickup_date: '',
-          drop_date: '',
-          trip_km: 0,
-          fare: '',
-          buy_cost: '',
-        });
-      }
-    } catch (error) {
-      setAlert({ 
-        message: error.error || "An error occurred while creating the booking", 
-        variant: "danger" 
-      });
+    setIsSubmitting(true);
+    try {
+      await createBookingSubmit(bookingService(formData));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAction = (id, action) => {
+    setSelected(id);
+    if (action === 'delete') {
+      setShowModal(true);
+      setIsDeleted(true);
+    } else if (action === 'status') {
+      setIsChange(true);
     }
   };
 
@@ -129,7 +214,7 @@ else if (action == 'delete')
             <div className="text-end">
               <button
                 className="btn btn-outline-primary py-1 px-2 px-sm-4 fs-14 fw-medium rounded-3 hover-bg"
-                onClick={handleToggleShowModal}
+                onClick={() => router.push('/panel/booking/create')}
               >
                 <span className="py-sm-1 d-block">
                   <i className="ri-add-line"></i>
@@ -152,7 +237,7 @@ else if (action == 'delete')
                     <th scope="col">Fare</th>
                     <th scope="col">KM</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Bidding Status</th>
+                    <th scope="col">Sell Price</th>
                     <th scope="col">Actions</th>
                   </tr>
                 </thead>
@@ -164,7 +249,7 @@ else if (action == 'delete')
         
 
           <td>
-            <b>{defaultValue.user?.first_name || "N/A"}</b><br/> {defaultValue.user?.email || "N/A"}<br/> {defaultValue.user?.phone_number || "N/A"}
+            <b>{defaultValue?.customer_name || "N/A"}</b><br/> {defaultValue?.customer_email || "N/A"}<br/> {defaultValue?.customer_number || "N/A"}
           </td>
 
          
@@ -202,7 +287,7 @@ else if (action == 'delete')
           </td>
 
           <td className="text-body">
-            {defaultValue.bidding_status || "N/A"}
+            {defaultValue.buy_cost || "N/A"}
           </td>
 
           <td>
@@ -272,7 +357,13 @@ else if (action == 'delete')
               </Table>
 
               {/* Pagination */}
-              <Pagination />
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={onPageChange}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+              />
             </div>
           </div>
         </Card.Body>
@@ -308,28 +399,68 @@ else if (action == 'delete')
 
               <Form.Group className="mb-4">
                 <Form.Label className="label">Pickup City</Form.Label>
-                <Form.Control
-                  type="text"
-                  className="text-dark"
-                  placeholder="Enter pickup city"
-                  name="pickup_location"
-                  value={formData.pickup_location}
-                  onChange={handleInputChange}
-                  required
-                />
+                <div className="position-relative">
+                  <Form.Control
+                    type="text"
+                    className="text-dark"
+                    placeholder="Enter pickup city"
+                    name="pickup_location"
+                    value={formData.pickup_location}
+                    onChange={handleLocationChange}
+                    onFocus={() => {
+                      setShowPickupSuggestions(true);
+                      setActiveField('pickup_location');
+                    }}
+                    required
+                    disabled={isSubmitting}
+                  />
+                  {showPickupSuggestions && pickupSuggestions.length > 0 && activeField === 'pickup_location' && (
+                    <div className="position-absolute w-100 bg-white border rounded-3 mt-1 shadow-sm" style={{ zIndex: 1000 }}>
+                      {pickupSuggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          className="p-2 cursor-pointer hover-bg-light"
+                          onClick={() => handleSuggestionClick(suggestion, 'pickup_location')}
+                        >
+                          {suggestion}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </Form.Group>
 
               <Form.Group className="mb-4">
                 <Form.Label className="label">Drop City</Form.Label>
-                <Form.Control
-                  type="text"
-                  className="text-dark"
-                  placeholder="Enter drop city"
-                  name="drop_location"
-                  value={formData.drop_location}
-                  onChange={handleInputChange}
-                  required
-                />
+                <div className="position-relative">
+                  <Form.Control
+                    type="text"
+                    className="text-dark"
+                    placeholder="Enter drop city"
+                    name="drop_location"
+                    value={formData.drop_location}
+                    onChange={handleLocationChange}
+                    onFocus={() => {
+                      setShowDropSuggestions(true);
+                      setActiveField('drop_location');
+                    }}
+                    required
+                    disabled={isSubmitting}
+                  />
+                  {showDropSuggestions && dropSuggestions.length > 0 && activeField === 'drop_location' && (
+                    <div className="position-absolute w-100 bg-white border rounded-3 mt-1 shadow-sm" style={{ zIndex: 1000 }}>
+                      {dropSuggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          className="p-2 cursor-pointer hover-bg-light"
+                          onClick={() => handleSuggestionClick(suggestion, 'drop_location')}
+                        >
+                          {suggestion}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </Form.Group>
 
               <Form.Group className="mb-4">
@@ -429,11 +560,11 @@ else if (action == 'delete')
                   variant="primary"
                   type="submit"
                   className="text-white fw-semibold py-2 px-2 px-sm-3"
-                  disabled={actionLoading}
+                  disabled={createBookingLoading || isSubmitting}
                 >
                   <span className="py-sm-1 d-block">
                     <i className="ri-add-line text-white"></i>{" "}
-                    <span>{actionLoading ? 'Creating...' : 'Create Booking'}</span>
+                    <span>{createBookingLoading || isSubmitting ? 'Creating...' : 'Create Booking'}</span>
                   </span>
                 </Button>
               </Form.Group>

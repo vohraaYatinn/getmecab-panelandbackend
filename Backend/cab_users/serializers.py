@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Cab, Booking, Bidding, Driver, Payment, Coupon, DriverRating
+from .models import Cab, Booking, Bidding, Driver, Payment, Coupon, DriverRating, VendorRequest, Vendor
 
 User = get_user_model()
 
@@ -71,7 +71,6 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class BookingSerializer(serializers.ModelSerializer):
-    bids=BiddingSerializer(many=True)
     class Meta:
         model = Booking
         fields = "__all__"
@@ -94,8 +93,8 @@ class CouponSerializer(serializers.ModelSerializer):
 
 
 class BookingAdminSerializer(serializers.ModelSerializer):
-    driver = DriverSerializer()
-    user = UserSerializer()
+    # driver = DriverSerializer()
+    # user = UserSerializer()
     class Meta:
         model = Booking
         fields = "__all__"
@@ -108,3 +107,17 @@ class DriverRatingAdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = DriverRating
         fields = "__all__"
+
+class VendorRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VendorRequest
+        fields = '__all__'
+        read_only_fields = ('status', 'created_at', 'updated_at')
+
+class VendorSerializer(serializers.ModelSerializer):
+    vendor_request = VendorRequestSerializer(read_only=True)
+    
+    class Meta:
+        model = Vendor
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')

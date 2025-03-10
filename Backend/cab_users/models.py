@@ -65,7 +65,7 @@ class Booking(models.Model):
     drop_date = models.DateTimeField(null=True, blank=True)
     trip_km = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     fare = models.DecimalField(max_digits=10, decimal_places=2)
-    buy_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    buy_cost = models.DecimalField(max_digits=10, decimal_places=2,null=True,blank=True)
     status = models.CharField(max_length=20, default='pending')
     bidding_status = models.CharField(max_length=20, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -80,7 +80,7 @@ class Booking(models.Model):
             raise ValidationError('Drop date must be after pickup date')
         if self.fare <= 0:
             raise ValidationError('Fare must be greater than 0')
-        if self.buy_cost <= 0:
+        if self.buy_cost and self.buy_cost <= 0:
             raise ValidationError('Buy cost must be greater than 0')
 
     def save(self, *args, **kwargs):
@@ -151,4 +151,29 @@ class CouponUsage(models.Model):
 
     class Meta:
         unique_together = ('user', 'coupon')  # Ensure a user-coupon pair is unique
+
+
+class VendorRequest(models.Model):
+    vendor_name = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15, unique=True)
+    email = models.EmailField(unique=True)
+    company_name = models.CharField(max_length=100)
+    pan_number = models.CharField(max_length=10, unique=True)
+    gst_number = models.CharField(max_length=15, unique=True)
+    status = models.CharField(max_length=20, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.vendor_name} - {self.company_name}"
+
+class Vendor(models.Model):
+    vendor_id = models.CharField(max_length=20, unique=True)
+    vendor_request = models.OneToOneField(VendorRequest, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.vendor_id} - {self.vendor_request.vendor_name}"
 

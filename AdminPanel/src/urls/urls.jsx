@@ -65,43 +65,31 @@ export const deleteCab = (payload_data) => {
   return project.post(Urls.DELETE_CAB , payload_data);
 };
 
-export const BookingService = {
-    createBooking: async (bookingData) => {
-        try {
-            const response = await axios.post(BOOKING_URLS.CREATE_BOOKING, bookingData);
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || { error: 'Failed to create booking' };
-        }
-    },
-
-    fetchAllBookings: async () => {
-        try {
-            const response = await axios.get(BOOKING_URLS.FETCH_ALL_BOOKINGS);
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || { error: 'Failed to fetch bookings' };
-        }
-    },
-
-    deleteBooking: async (id) => {
-        try {
-            const response = await axios.post(BOOKING_URLS.DELETE_BOOKING, { id });
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || { error: 'Failed to delete booking' };
-        }
-    },
-
-    changeBookingStatus: async (id, status) => {
-        try {
-            const response = await axios.post(BOOKING_URLS.CHANGE_BOOKING_STATUS, { id, status });
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || { error: 'Failed to change booking status' };
-        }
-    }
+export const bookingService = (payload_data) => {
+  return project.post(Urls.BOOKING_SERVICE , payload_data);
 };
+
+export const cityAutocomplete = (payload_data) => {
+  return project.get(Urls.CITY_AUTOCOMPLETE, payload_data);
+};
+
+export const getVendorRequests = (payload_data) => {
+  return project.get(Urls.VENDOR_REQUESTS, payload_data);
+};
+
+export const vendorRequestAction = (payload_data) => {
+  return project.post(Urls.VENDOR_REQUESTS_ACTION, payload_data);
+};
+
+export const getVendors = (payload_data) => {
+  return project.get(Urls.VENDORS, payload_data);
+};
+
+export const createVendor = (payload_data) => {
+  return project.post(Urls.CREATE_VENDOR, payload_data);
+};
+
+
 
 
 

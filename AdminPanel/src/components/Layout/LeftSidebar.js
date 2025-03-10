@@ -66,7 +66,17 @@ const LeftSidebar = ({ toogleActive }) => {
                 <span className="title">Bookings</span>
               </Link>
             </div>
-
+            <div className="menu-item">
+              <Link
+                href="/vendor/"
+                className={`menu-link ${
+                  pathname === "/vendor/" ? "active" : ""
+                }`}
+              >
+                 <i className="material-symbols-outlined">people</i>
+                <span className="title">Vendor</span>
+              </Link>
+            </div>
             <div className="menu-item">
               <Link
                 href="/drivers/"

@@ -7,97 +7,110 @@ import LeadConversion from '@/components/Crm/LeadConversion';
 import TotalOrders from '@/components/Crm/TotalOrders';
 import LeadsTable from '@/components/Crm/LeadsTable';
 import useAxios from "@/network/useAxios";
-import { deleteBooking, getBookingsAdmin, getBookingsAdminAnalytics,changeBookingStatus } from "@/urls/urls";
+import { deleteBooking, getBookingsAdmin, getBookingsAdminAnalytics, changeBookingStatus } from "@/urls/urls";
 import { useEffect } from "react";
 import { useState } from "react";
 import AlertMessage from "@/components/AlertMessage/AlertMessage";
+
 export default function Page() {
-  const [data, setData] = useState([])
-  const [dataAnalytics, setDataAnalytics] = useState({})
+  const [data, setData] = useState([]);
+  const [dataAnalytics, setDataAnalytics] = useState({});
   const [status, setStatus] = useState("");
-  const [isChange,setIsChange] = useState(false)
-  const [isDeleted,setIsDeleted] = useState(false)
-   const [alert, setAlert] = useState({ message: "", variant: "" });
+  const [isChange, setIsChange] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
+  const [alert, setAlert] = useState({ message: "", variant: "" });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
+
   const [
     bookingResponse,
     bookingError,
     bookingLoading,
     bookingFetch,
   ] = useAxios();
+
   const [
     AnalyticsbookingResponse,
     AnalyticsbookingError,
     AnalyticsbookingLoading,
     AnalyticsbookingFetch,
   ] = useAxios();
+
   const [
     ActionResponse,
     ActionRError,
     ActionRLoading,
     ActionRFetch,
   ] = useAxios();
-  const [selected, setSelected] = useState(false)
+
+  const [selected, setSelected] = useState(false);
+
   const fetchActivityByIdfunction = () => {
-    bookingFetch(getBookingsAdmin({}));
+    bookingFetch(getBookingsAdmin({
+      page: currentPage,
+      page_size: itemsPerPage
+    }));
   };
+
   const fetchActivityByIdAnalyticsfunction = () => {
     AnalyticsbookingFetch(getBookingsAdminAnalytics({}));
   };
+
   const deleteRequested = () => {
-    ActionRFetch(deleteBooking({id:selected}));
-    setIsDeleted(false)
-    setSelected(null)
+    ActionRFetch(deleteBooking({id: selected}));
+    setIsDeleted(false);
+    setSelected(null);
   };
+
   const changeStatus = () => {
-if(selected && status && isChange)
-    {
-      ActionRFetch(changeBookingStatus({id:selected,status:status}));
-      setSelected(null)
-      setStatus(null)
-      setIsChange(false)
-
-}
+    if(selected && status && isChange) {
+      ActionRFetch(changeBookingStatus({id: selected, status: status}));
+      setSelected(null);
+      setStatus(null);
+      setIsChange(false);
+    }
   };
 
-useEffect(()=>{
-  if (isDeleted && selected){
-    deleteRequested()
+  useEffect(() => {
+    if (isDeleted && selected) {
+      deleteRequested();
+    } else if (isChange && status && selected) {
+      changeStatus();
+    }
+  }, [status, selected, isChange, isDeleted]);
 
+  useEffect(() => {
+    if (ActionResponse['result'] === 'success') {
+      fetchActivityByIdfunction();
+      fetchActivityByIdAnalyticsfunction();
+      setAlert({ message: ActionResponse['result'], variant: "success" });
+    }
+  }, [ActionResponse]);
 
-  }
-  else if (isChange && status && selected){
-changeStatus()
-  }
+  useEffect(() => {
+    fetchActivityByIdfunction();
+    fetchActivityByIdAnalyticsfunction();
+  }, [currentPage]);
 
-},[status,selected,isChange,isDeleted])
+  useEffect(() => {
+    if(bookingResponse?.result === "success") {
+      setData(bookingResponse?.data);
+      setTotalItems(bookingResponse?.total || bookingResponse?.data.length);
+      setTotalPages(Math.ceil((bookingResponse?.total || bookingResponse?.data.length) / itemsPerPage));
+    }
+  }, [bookingResponse]);
 
-useEffect(()=>{
-  console.log(ActionResponse['result'])
-if (ActionResponse['result'] == 'success')
-{
-  fetchActivityByIdfunction()
-  fetchActivityByIdAnalyticsfunction()
-  setAlert({ message: ActionResponse['result'], variant: "success" });
+  useEffect(() => {
+    if(AnalyticsbookingResponse?.result === "success") {
+      setDataAnalytics(AnalyticsbookingResponse?.data);
+    }
+  }, [AnalyticsbookingResponse]);
 
-}
-},[ActionResponse])
-
-useEffect(()=>{
-  fetchActivityByIdfunction()
-  fetchActivityByIdAnalyticsfunction()
-},[])
-useEffect(()=>{
-  if(bookingResponse?.result == "success"){
-    setData(bookingResponse?.data)
-    console.log(bookingResponse?.data)
-  }
-},[bookingResponse])
-useEffect(()=>{
-  if(AnalyticsbookingResponse?.result == "success"){
-    setDataAnalytics(AnalyticsbookingResponse?.data)
-    console.log(AnalyticsbookingResponse?.data)
-  }
-},[AnalyticsbookingResponse])
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   return (
     <>
@@ -140,9 +153,21 @@ useEffect(()=>{
         variant={alert.variant}
         onClose={() => setAlert({ message: "", variant: "" })}
       />
-      <LeadsTable data={data} setSelected={setSelected} deleteRequested={deleteRequested}
-      status={status} setStatus={setStatus} changeStatus={changeStatus} setIsChange={setIsChange}
-      setIsDeleted={setIsDeleted} ActionResponse={ActionResponse}
+      <LeadsTable 
+        data={data} 
+        setSelected={setSelected} 
+        deleteRequested={deleteRequested}
+        status={status} 
+        setStatus={setStatus} 
+        changeStatus={changeStatus} 
+        setIsChange={setIsChange}
+        setIsDeleted={setIsDeleted} 
+        ActionResponse={ActionResponse}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
       />
     </>
   );

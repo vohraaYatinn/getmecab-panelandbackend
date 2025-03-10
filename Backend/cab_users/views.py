@@ -11,10 +11,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from googlemaps import Client as GoogleMaps
-from .models import Cab, Booking, Driver, Bidding, Payment, DriverRating, Coupon, CouponUsage
+from .models import Cab, Booking, Driver, Bidding, Payment, DriverRating, Coupon, CouponUsage, VendorRequest, Vendor
 from .serializers import UserSerializer, SignupSerializer, CabSerializer, BookingSerializer, BiddingSerializer, \
     DriverSerializer, PaymentSerializer, CouponSerializer, OnlyBookingSerializer, BookingAdminSerializer, \
-    DriverAdminSerializer, DriverRatingAdminSerializer
+    DriverAdminSerializer, DriverRatingAdminSerializer, VendorRequestSerializer, VendorSerializer
 from rest_framework import status
 
 User = get_user_model()
@@ -147,55 +147,67 @@ class BookCabView(APIView):
 
     def post(self, request):
         #user = request.user
-        userdata= request.data.get('formData')
-        bookingData = request.data.get('bookingData')
-        cab_id = bookingData.get("cabid")
+        #userdata= request.data.get('formData')
+        bookingData = request.data
+        #cab_id = bookingData.get("cabid")
         pickup = bookingData.get("pickup_location")
         drop = bookingData.get("drop_location")
         trip_type = bookingData.get("trip_type")
         pickup_date = bookingData.get("pickup_date")
+        buy_cost=bookingData.get('buy_cost')
+        customer_email=bookingData.get('customer_email')
+        customer_name=bookingData.get('customer_name')
+        customer_number=bookingData.get('customer_number')
+        fare=bookingData.get('fare')
 
 
         distance_data = gmaps.distance_matrix(pickup, drop)
-        distance_km = round(distance_data["rows"][0]["elements"][0]["distance"]["value"] / 1000,2)
-        cab  = list(Cab.objects.filter(id=cab_id,is_available=True))
-        if not cab:
-            return Response({'error': 'Cab Already Booked'}, status=400)
-        cab=cab[0]
-        fare = distance_km * cab.price_per_km
-        if trip_type == "round_trip":
-            fare *= 2
-            distance_km *= 2
-        distance_km=round(distance_km,2)
-        fare=round(fare,2)
-        user_data = {
-            'username':'customer' + str(len(list(User.objects.filter(role='customer')))+1),
-            'first_name':userdata.get('name'),
-            'email':userdata.get('email'),
-            'phone_number':userdata.get('phone'),
-            'role':'customer',
-            'password':'alkjaklsdjaskd',
-        }
-
-        user = User.objects.filter(phone_number=userdata.get('phone'))
-        if not user:
-            serializer = SignupSerializer(data=user_data)
-            if serializer.is_valid():
-                serializer.save()
-            else:
-                return Response({'error':serializer.errors},status=400)
-            user = User.objects.filter(phone_number=userdata.get('phone'))
-
-
+        distance_km = round(distance_data["rows"][0]["elements"][0]["distance"]["value"] // 1000,2)
+        # cab  = list(Cab.objects.filter(id=cab_id,is_available=True))
+        # if not cab:
+        #     return Response({'error': 'Cab Already Booked'}, status=400)
+        # cab=cab[0]
+        # fare = distance_km * cab.price_per_km
+        # if trip_type == "round_trip":
+        #     fare *= 2
+        #     distance_km *= 2
+        # distance_km=round(distance_km,2)
+        # fare=round(fare,2)
+        # user_data = {
+        #     'username':'customer' + str(len(list(User.objects.filter(role='customer')))+1),
+        #     'first_name':userdata.get('name'),
+        #     'email':userdata.get('email'),
+        #     'phone_number':userdata.get('phone'),
+        #     'role':'customer',
+        #     'password':'alkjaklsdjaskd',
+        # }
+        #
+        # user = User.objects.filter(phone_number=userdata.get('phone'))
+        # if not user:
+        #     serializer = SignupSerializer(data=user_data)
+        #     if serializer.is_valid():
+        #         serializer.save()
+        #     else:
+        #         return Response({'error':serializer.errors},status=400)
+        #     user = User.objects.filter(phone_number=userdata.get('phone'))
 
 
 
-        booking = Booking.objects.create(user=user[0], cab=cab, pickup_location=pickup,
-                                         drop_location=drop, trip_type=trip_type, pickup_date=pickup_date,
-                        fare=fare,trip_km=distance_km)
-        payment= Payment.objects.create(booking=booking,amount_received=fare,net_amount=fare)
-        cab.is_available = False
-        cab.save()
+
+
+        booking = Booking.objects.create(customer_name=customer_name,
+                                         customer_number=customer_number,
+                                         customer_email=customer_email,
+                                         pickup_location=pickup,
+                                         drop_location=drop,
+                                         trip_type=trip_type,
+                                         pickup_date=pickup_date,
+                                         fare=fare,
+                                         trip_km=distance_km,
+                                         buy_cost=buy_cost)
+        payment= Payment.objects.create(booking=booking,amount_received=int(fare),net_amount=int(fare))
+        # cab.is_available = False
+        # cab.save()
         serializer = BookingSerializer(booking)
 
         return Response({ "booking": serializer.data},status=200)
@@ -767,7 +779,7 @@ class fetchAllBookings(APIView):
 
     def get(self,request):
         try:
-            booking = Booking.objects.filter().select_related("driver", "user").order_by("-timestamp")
+            booking = Booking.objects.filter()#.select_related("driver", "user").order_by("-timestamp")
             data=[]
             if booking:
                 serialize = BookingAdminSerializer(booking,many=True)
@@ -972,6 +984,7 @@ class signupUser(APIView):
             user_req = User.objects.create(
 
             )
+            check_if_Valid_otp=''#just to remove error
             if user_req:
                 refresh = RefreshToken.for_user(user_req)
                 return Response({"result" : "success", "data":check_if_Valid_otp, "user":True, "access": str(refresh.access_token), "refresh": str(refresh)}, 200)
@@ -1122,14 +1135,225 @@ class DeleteCab(APIView):
             return Response({"error": str(err)}, status=500)
 
 class CreateBookingView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
-        serializer = BookingSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
+        try:
+            serializer = BookingSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    'message': 'Booking created successfully',
+                    'data': serializer.data
+                }, status=status.HTTP_201_CREATED)
             return Response({
-                'message': 'Booking created successfully',
-                'data': serializer.data
-            }, status=status.HTTP_201_CREATED)
-        return Response({
-            'error': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+                'error': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as err:
+            return Response({"error": str(err)}, status=500)
+
+class VendorRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            serializer = VendorRequestSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "result": "success",
+                    "message": "Vendor request submitted successfully",
+                    "data": serializer.data
+                }, status=201)
+            return Response({
+                "result": "error",
+                "message": "Invalid data",
+                "errors": serializer.errors
+            }, status=400)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+    def get(self, request):
+        try:
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            vendor_requests = VendorRequest.objects.all().order_by('-created_at')
+            total = vendor_requests.count()
+            
+            # Calculate pagination
+            start = (page - 1) * page_size
+            end = start + page_size
+            vendor_requests = vendor_requests[start:end]
+            
+            serializer = VendorRequestSerializer(vendor_requests, many=True)
+            return Response({
+                "result": "success",
+                "data": serializer.data,
+                "total": total
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+class VendorRequestActionView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            request_id = request.data.get('request_id')
+            action = request.data.get('action')  # 'approve' or 'reject'
+            
+            if not request_id or not action:
+                return Response({
+                    "result": "error",
+                    "message": "Request ID and action are required"
+                }, status=400)
+
+            vendor_request = VendorRequest.objects.get(id=request_id)
+            
+            if action == 'approve':
+                # Generate vendor ID
+                vendor_id = f"VENDOR{str(vendor_request.id).zfill(6)}"
+                
+                # Create user
+                user = User.objects.create_user(
+                    username=vendor_request.email,
+                    email=vendor_request.email,
+                    password=request.data.get('password', 'default_password123')
+                )
+                
+                # Create vendor
+                Vendor.objects.create(
+                    vendor_id=vendor_id,
+                    vendor_request=vendor_request,
+                    user=user
+                )
+                
+                vendor_request.status = 'approved'
+                vendor_request.save()
+                
+                return Response({
+                    "result": "success",
+                    "message": "Vendor request approved successfully",
+                    "data": {
+                        "vendor_id": vendor_id,
+                        "email": vendor_request.email
+                    }
+                }, status=200)
+                
+            elif action == 'reject':
+                vendor_request.status = 'rejected'
+                vendor_request.save()
+                
+                return Response({
+                    "result": "success",
+                    "message": "Vendor request rejected successfully"
+                }, status=200)
+                
+            else:
+                return Response({
+                    "result": "error",
+                    "message": "Invalid action"
+                }, status=400)
+                
+        except VendorRequest.DoesNotExist:
+            return Response({
+                "result": "error",
+                "message": "Vendor request not found"
+            }, status=404)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+class VendorListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+            
+            vendors = Vendor.objects.all().order_by('-created_at')
+            total = vendors.count()
+            
+            # Calculate pagination
+            start = (page - 1) * page_size
+            end = start + page_size
+            vendors = vendors[start:end]
+            
+            serializer = VendorSerializer(vendors, many=True)
+            return Response({
+                "result": "success",
+                "data": serializer.data,
+                "total": total
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+class CreateVendorView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            # Create vendor request
+            vendor_request_data = {
+                'vendor_name': request.data.get('vendor_name'),
+                'phone_number': request.data.get('phone_number'),
+                'email': request.data.get('email'),
+                'company_name': request.data.get('company_name'),
+                'pan_number': request.data.get('pan_number'),
+                'gst_number': request.data.get('gst_number'),
+                'status': 'approved'  # Directly approve since it's created by admin
+            }
+            
+            vendor_request_serializer = VendorRequestSerializer(data=vendor_request_data)
+            if not vendor_request_serializer.is_valid():
+                return Response({
+                    "result": "error",
+                    "message": "Invalid vendor request data",
+                    "errors": vendor_request_serializer.errors
+                }, status=400)
+            
+            vendor_request = vendor_request_serializer.save()
+            
+            # Generate vendor ID
+            vendor_id = f"VENDOR{str(vendor_request.id).zfill(6)}"
+            
+            # Create user
+            user = User.objects.create_user(
+                username=vendor_request.email,
+                email=vendor_request.email,
+                password=request.data.get('password', 'default_password123')
+            )
+            
+            # Create vendor
+            vendor = Vendor.objects.create(
+                vendor_id=vendor_id,
+                vendor_request=vendor_request,
+                user=user
+            )
+            
+            return Response({
+                "result": "success",
+                "message": "Vendor created successfully",
+                "data": {
+                    "vendor_id": vendor_id,
+                    "email": vendor_request.email
+                }
+            }, status=201)
+            
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)

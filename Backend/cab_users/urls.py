@@ -5,7 +5,8 @@ from .views import SignupView, LoginView, UserDetailView, CabAvailabilityView, B
     RateDriverAPIView, DriverRatingsAPIView, GetAutoComplete, ApplyCouponAPIView, CheckCouponAPIView, MyBookingAPIView, \
     PhoneOtp, PhoneOtpVerify, signupUser, fetchAllBookings, fetchAllDrivers, fetchAllCabs, fetchAllReviews, \
     fetchAllCoupons, fetchAllBookingsAnalytics, AddCoupon, deleteBookings, deleteCoupon, changeBookingStatus, \
-    DriverUpdate, CabUpdate, DeleteDriver, DeleteCab, CreateBookingView
+    DriverUpdate, CabUpdate, DeleteDriver, DeleteCab, CreateBookingView, VendorRequestView, VendorRequestActionView, \
+    VendorListView, CreateVendorView
 
 urlpatterns = [
     #users
@@ -14,7 +15,7 @@ urlpatterns = [
     path("user/", UserDetailView.as_view()),
     
     path("cab-availability/", CabAvailabilityView.as_view()),
-    path("book-cab/", BookCabView.as_view()),
+    path("create-booking/", BookCabView.as_view()),
     path("cancel-booking/", CancelBookingView.as_view()),
     path("bookings/", BookingListView.as_view()),
     path("city-autocomplete",GetAutoComplete.as_view()),
@@ -58,7 +59,12 @@ urlpatterns = [
     path("add-cab/", AddCabView.as_view()),
     path("add-coupon/", AddCoupon.as_view()),
     path("admin-payment-overview/", AdminPaymentOverviewView.as_view()),
-    path('bookings/create/', CreateBookingView.as_view(), name='create-booking'),
+    path('create-bookingsds/', CreateBookingView.as_view(), name='create-booking'),
 
+    # Vendor management
+    path('vendor-requests/', VendorRequestView.as_view()),
+    path('vendor-requests/action/', VendorRequestActionView.as_view()),
+    path('vendors/', VendorListView.as_view()),
+    path('vendors/create/', CreateVendorView.as_view()),
 
 ]

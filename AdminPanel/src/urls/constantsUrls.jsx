@@ -7,6 +7,7 @@ export class Urls {
     static GET_BOOKINGS_ANALYTICS = Urls.API_PREFIX + 'fetch-all-booking-analytics/';
     static DELETE_BOOKING = Urls.API_PREFIX + 'delete-booking/';
     static CHANGE_BOOKING_STATUE = Urls.API_PREFIX + 'change-booking-status/';
+    static CITY_AUTOCOMPLETE = Urls.API_PREFIX + 'city-autocomplete';
 
     //drivers
     static GET_DRIVERS = Urls.API_PREFIX + 'fetch-all-drivers/';
@@ -20,6 +21,7 @@ export class Urls {
     static CAB_UPDATE_SUBMIT = Urls.API_PREFIX + 'cab-update-submit/';
     static DELETE_CAB = Urls.API_PREFIX + 'delete-cab/';
     static GET_BIDDING_DATA = Urls.API_PREFIX + 'view-bids/';
+    static BOOKING_SERVICE = Urls.API_PREFIX + 'create-booking/';
 
     //get all reviews
     static GET_ALL_REVIEWS = Urls.API_PREFIX + 'fetch-all-reviews/';
@@ -31,6 +33,12 @@ export class Urls {
 
     //booking creation
     static CREATE_BOOKING = Urls.API_PREFIX + 'bookings/create/';
+
+    // Vendor management
+    static VENDOR_REQUESTS = Urls.API_PREFIX + 'vendor-requests/';
+    static VENDOR_REQUESTS_ACTION = Urls.API_PREFIX + 'vendor-requests/action/';
+    static VENDORS = Urls.API_PREFIX + 'vendors/';
+    static CREATE_VENDOR = Urls.API_PREFIX + 'vendors/create/';
 }
 
 export const BOOKING_URLS = {
