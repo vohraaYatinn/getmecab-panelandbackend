@@ -450,20 +450,43 @@ class DriverTripSummaryView(APIView):
             "total_km": total_km,
             "total_earning": total_earning
         })
-
+def parse_date(date_str):
+    """Helper function to parse date strings safely."""
+    from datetime import datetime
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S") if date_str else None
+    except ValueError:
+        return None
 
 class AddCabView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # if request.user.role != "admin":
-        #     return Response({"error": "Only admins can add cabs"}, status=403)
-
-        serializer = CabSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
+        try:
+            data=request.data
+            cab = Cab(
+                cab_number=data.get("cab_number"),
+                cab_name=data.get("cab_name", ""),
+                cab_type=data.get("cab_type"),
+                price_per_km=data.get("price_per_km", 0),
+                is_available=data.get("is_available", True),
+                one_year_from=parse_date(data.get("one_year_from")),
+                one_year_to=parse_date(data.get("one_year_to")),
+                five_year_from=parse_date(data.get("five_year_from")),
+                five_year_to=parse_date(data.get("five_year_to")),
+                fitness_year_from=parse_date(data.get("fitness_year_from")),
+                fitness_year_to=parse_date(data.get("fitness_year_to")),
+                insurance_year_from=parse_date(data.get("insurance_year_from")),
+                insurance_year_to=parse_date(data.get("insurance_year_to")),
+                pollutions_year_from=parse_date(data.get("pollutions_year_from")),
+                pollutions_year_to=parse_date(data.get("pollutions_year_to")),
+                fule=data.get("fule", ""),
+            )
+            cab.save()
             return Response({"message": "Cab added successfully"}, status=201)
-        return Response(serializer.errors, status=400)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
+
 
 
 class AddCoupon(APIView):
@@ -1053,7 +1076,8 @@ class CabUpdate(APIView):
 
     def post(self, request):
         try:
-            id = request.data.get("id")
+            data=request.data
+            id = data.get("id")
             cab_name = request.data.get("cab_name")
             cab_number = request.data.get("cab_number")
             price_per_km = request.data.get("price_per_km")
@@ -1068,12 +1092,22 @@ class CabUpdate(APIView):
             if not cab:
                 return Response({"error": "Cab not found"}, status=404)
 
-            # Update the cab details
-            cab.cab_name = cab_name
-            cab.cab_number = cab_number
-            cab.price_per_km = price_per_km
-            cab.is_available = is_available
-            cab.cab_type = cab_type
+            cab.cab_number = data.get("cab_number", cab.cab_number)
+            cab.cab_name = data.get("cab_name", cab.cab_name)
+            cab.cab_type = data.get("cab_type", cab.cab_type)
+            cab.price_per_km = data.get("price_per_km", cab.price_per_km)
+            cab.is_available = data.get("is_available", cab.is_available)
+            cab.one_year_from = parse_date(data.get("one_year_from")) or cab.one_year_from
+            cab.one_year_to = parse_date(data.get("one_year_to")) or cab.one_year_to
+            cab.five_year_from = parse_date(data.get("five_year_from")) or cab.five_year_from
+            cab.five_year_to = parse_date(data.get("five_year_to")) or cab.five_year_to
+            cab.fitness_year_from = parse_date(data.get("fitness_year_from")) or cab.fitness_year_from
+            cab.fitness_year_to = parse_date(data.get("fitness_year_to")) or cab.fitness_year_to
+            cab.insurance_year_from = parse_date(data.get("insurance_year_from")) or cab.insurance_year_from
+            cab.insurance_year_to = parse_date(data.get("insurance_year_to")) or cab.insurance_year_to
+            cab.pollutions_year_from = parse_date(data.get("pollutions_year_from")) or cab.pollutions_year_from
+            cab.pollutions_year_to = parse_date(data.get("pollutions_year_to")) or cab.pollutions_year_to
+            cab.fule = data.get("fule", cab.fule)
 
             cab.save()
 
@@ -1357,3 +1391,28 @@ class CreateVendorView(APIView):
                 "result": "error",
                 "message": str(e)
             }, status=500)
+
+
+class VendorBookingListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+
+            user=request.user
+            status = request.data.get('status')
+            booking = Booking.objects.filter(status=status,vendor__user=user)
+            serializer = BookingSerializer(booking, many=True)
+            return Response({
+                "result": "success",
+                "data": serializer.data,
+
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+
+

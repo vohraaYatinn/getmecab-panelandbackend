@@ -45,14 +45,54 @@ class Cab(models.Model):
     SUV = 'SUV'
     SEDAN = 'SEDAN'
 
-    CAB_TYPE_CHOICES = [(SUV, "One Way"), (SEDAN, "Round Trip")]
+    CAB_TYPE_CHOICES = [(SUV, "SUV"), (SEDAN, "SEDAN")]
     cab_number = models.CharField(max_length=20, unique=True)
     cab_name = models.CharField(max_length=20,default='')
     cab_type = models.CharField(max_length=20, choices=CAB_TYPE_CHOICES)
     price_per_km = models.IntegerField(default=0)
     is_available = models.BooleanField(default=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    one_year_from=models.DateTimeField(null=True)
+    one_year_to=models.DateTimeField(null=True)
+    five_year_from=models.DateTimeField(null=True)
+    five_year_to=models.DateTimeField(null=True)
+    fitness_year_from=models.DateTimeField(null=True)
+    fitness_year_to=models.DateTimeField(null=True)
+    insurance_year_from=models.DateTimeField(null=True)
+    insurance_year_to=models.DateTimeField(null=True)
+    pollutions_year_from=models.DateTimeField(null=True)
+    pollutions_year_to=models.DateTimeField(null=True)
+    fule=models.CharField(max_length=20)
 
+
+class VendorRequest(models.Model):
+    vendor_name = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15, unique=True)
+    email = models.EmailField(unique=True)
+    company_name = models.CharField(max_length=100)
+    pan_number = models.CharField(max_length=10, unique=True)
+    gst_number = models.CharField(max_length=15, unique=True)
+    status = models.CharField(max_length=20, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.vendor_name} - {self.company_name}"
+
+class Vendor(models.Model):
+    vendor_id = models.CharField(max_length=20, unique=True)
+    vendor_name = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15, unique=True)
+    email = models.EmailField(unique=True)
+    company_name = models.CharField(max_length=100)
+    pan_number = models.CharField(max_length=10, unique=True)
+    gst_number = models.CharField(max_length=15, unique=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.vendor_id} - {self.vendor_request.vendor_name}"
 
 class Booking(models.Model):
     customer_name = models.CharField(max_length=100)
@@ -70,6 +110,7 @@ class Booking(models.Model):
     bidding_status = models.CharField(max_length=20, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    vendor= models.ForeignKey(Vendor,on_delete=models.CASCADE, related_name="vendor")
 
     def clean(self):
         if not self.customer_number or len(self.customer_number) < 10:
@@ -153,27 +194,5 @@ class CouponUsage(models.Model):
         unique_together = ('user', 'coupon')  # Ensure a user-coupon pair is unique
 
 
-class VendorRequest(models.Model):
-    vendor_name = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=15, unique=True)
-    email = models.EmailField(unique=True)
-    company_name = models.CharField(max_length=100)
-    pan_number = models.CharField(max_length=10, unique=True)
-    gst_number = models.CharField(max_length=15, unique=True)
-    status = models.CharField(max_length=20, default='pending')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"{self.vendor_name} - {self.company_name}"
-
-class Vendor(models.Model):
-    vendor_id = models.CharField(max_length=20, unique=True)
-    vendor_request = models.OneToOneField(VendorRequest, on_delete=models.CASCADE)
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.vendor_id} - {self.vendor_request.vendor_name}"
 

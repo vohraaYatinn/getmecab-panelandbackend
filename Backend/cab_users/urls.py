@@ -6,7 +6,7 @@ from .views import SignupView, LoginView, UserDetailView, CabAvailabilityView, B
     PhoneOtp, PhoneOtpVerify, signupUser, fetchAllBookings, fetchAllDrivers, fetchAllCabs, fetchAllReviews, \
     fetchAllCoupons, fetchAllBookingsAnalytics, AddCoupon, deleteBookings, deleteCoupon, changeBookingStatus, \
     DriverUpdate, CabUpdate, DeleteDriver, DeleteCab, CreateBookingView, VendorRequestView, VendorRequestActionView, \
-    VendorListView, CreateVendorView
+    VendorListView, CreateVendorView, VendorBookingListView
 
 urlpatterns = [
     #users
@@ -65,6 +65,8 @@ urlpatterns = [
     path('vendor-requests/', VendorRequestView.as_view()),
     path('vendor-requests/action/', VendorRequestActionView.as_view()),
     path('vendors/', VendorListView.as_view()),
-    path('vendors/create/', CreateVendorView.as_view()),
+    path('create-vendors/', CreateVendorView.as_view()),
+    path('vendor-booking/', VendorBookingListView.as_view()),
+
 
 ]
