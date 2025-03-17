@@ -1,3 +1,4 @@
+import re
 from http.client import responses
 from random import random
 import requests
@@ -6,16 +7,17 @@ from django.core.serializers import serialize
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 from pymupdf import message
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from googlemaps import Client as GoogleMaps
-from .models import Cab, Booking, Driver, Bidding, Payment, DriverRating, Coupon, CouponUsage, VendorRequest, Vendor
+from .models import Cab, Booking, Driver, Bidding, Payment, DriverRating, Coupon, CouponUsage, Vendor, VendorRequest
 from .serializers import UserSerializer, SignupSerializer, CabSerializer, BookingSerializer, BiddingSerializer, \
     DriverSerializer, PaymentSerializer, CouponSerializer, OnlyBookingSerializer, BookingAdminSerializer, \
     DriverAdminSerializer, DriverRatingAdminSerializer, VendorRequestSerializer, VendorSerializer
-from rest_framework import status
+from .pagination import CustomPagination
 
 User = get_user_model()
 gmaps = GoogleMaps(key="AIzaSyDwGmQUxPyvUDDbojzLfBG8Cqk3yrAG2gg")
@@ -68,23 +70,53 @@ class SignupView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        request.data['username'] = 'customer' + str(len(list(User.objects.filter(role='customer')))+1)
-        serializer = SignupSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "User created successfully"}, status=201)
-        return Response(serializer.errors, status=400)
+        try:
+            request.data['username'] = 'customer' + str(len(list(User.objects.filter(role='customer')))+1)
+            serializer = SignupSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"message": "User created successfully"}, status=201)
+            return Response(serializer.errors, status=400)
+
+        except Exception as err:
+            return Response({"error": str(err)}, status=500)
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        email = request.data.get("email")
-        user = User.objects.filter(email=email).first()
-        if user and user.check_password(request.data.get("password")):
-            refresh = RefreshToken.for_user(user)
-            return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
-        return Response({"error": "Invalid credentials"}, status=401)
+        try:
+            email = request.data.get("email")
+            user = User.objects.filter(email=email).first()
+            if user and user.check_password(request.data.get("password")):
+                refresh = RefreshToken.for_user(user)
+                return Response(data={"access": str(refresh.access_token), "refresh": str(refresh)},status=200)
+            return Response({"error": "Invalid credentials"}, status=401)
+
+        except Exception as err:
+            return Response({"error": str(err)}, status=500)
+
+
+class ResetPasswordView(APIView):
+    permission_classes = [IsAuthenticated]  # Make sure user is authenticated
+
+    def post(self, request):
+        try:
+            old_password = request.data.get("old_password")
+            new_password = request.data.get("new_password")
+
+            user = request.user  # Get the logged-in user
+
+            if not user.check_password(old_password):
+                return Response({"error": "Old password is incorrect"}, status=400)
+
+            user.set_password(new_password)  # Set the new password
+            user.save()
+
+            return Response({'result':'success',"message": "Password updated successfully"}, status=200)
+
+        except Exception as err:
+            return Response({"error": str(err)}, status=500)
 
 class UserDetailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -97,50 +129,54 @@ class CabAvailabilityView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        pickup = request.GET.get("pickup")
-        drop = request.GET.get("drop")
-        trip_type = request.GET.get("trip_type")
-        pickup_date = request.GET.get("pickup_date_time")
-        drop_date = request.GET.get("drop_date_time")
-        pickup_time = request.GET.get("pickup_time")
-        if not pickup:
-            return Response({"error":'Please Fill Pickup Location'}, status=401)
-        if not drop:
-            return Response({"error":'Please Fill Drop Location'}, status=401)
-        if not trip_type:
-            return Response({"error":'Please Fill Tripe Type'}, status=401)
-        if not pickup_date:
-            return Response({"error":'Please Fill Pickup Date'}, status=401)
-        # if not pickup_time:
-        #     return Response({"message":'Please Fill Pickup Time'}, status=401)
-        distance_data = gmaps.distance_matrix(pickup, drop)
-        distance_km = round(distance_data["rows"][0]["elements"][0]["distance"]["value"] / 1000,2)
+        try:
+            pickup = request.GET.get("pickup")
+            drop = request.GET.get("drop")
+            trip_type = request.GET.get("trip_type")
+            pickup_date = request.GET.get("pickup_date_time")
+            drop_date = request.GET.get("drop_date_time")
+            pickup_time = request.GET.get("pickup_time")
+            if not pickup:
+                return Response({"error":'Please Fill Pickup Location'}, status=401)
+            if not drop:
+                return Response({"error":'Please Fill Drop Location'}, status=401)
+            if not trip_type:
+                return Response({"error":'Please Fill Tripe Type'}, status=401)
+            if not pickup_date:
+                return Response({"error":'Please Fill Pickup Date'}, status=401)
+            # if not pickup_time:
+            #     return Response({"message":'Please Fill Pickup Time'}, status=401)
+            distance_data = gmaps.distance_matrix(pickup, drop)
+            distance_km = round(distance_data["rows"][0]["elements"][0]["distance"]["value"] / 1000,2)
 
-        available_cabs = Cab.objects.filter(is_available=True)
-        if not available_cabs.exists():
-            return Response({"error": "No cabs available"}, status=404)
-        available_cabs = CabSerializer(available_cabs,many=True)
-        available_cabs = available_cabs.data
-        if trip_type == "round_trip":
-            distance_km *= 2
-        for cab in available_cabs:
-            fare = distance_km * cab['price_per_km']
-
-
-            cab["fare"]= round(fare,2)
-            cab["trip_km"]= round(distance_km,2)
+            available_cabs = Cab.objects.filter(is_available=True)
+            if not available_cabs.exists():
+                return Response({"error": "No cabs available"}, status=404)
+            available_cabs = CabSerializer(available_cabs,many=True)
+            available_cabs = available_cabs.data
+            if trip_type == "round_trip":
+                distance_km *= 2
+            for cab in available_cabs:
+                fare = distance_km * cab['price_per_km']
 
 
-        return Response({"data":
-                             {
-                              'carData': available_cabs,
-                              'bookingData': {'pickup_location': pickup, 'drop_location': drop,
-                                              'trip_type': trip_type, 'pickup_date': pickup_date,
-                                              'drop_date':drop_date
-                                              }
-                              }
+                cab["fare"]= round(fare,2)
+                cab["trip_km"]= round(distance_km,2)
 
-                         },status=200)
+
+            return Response({"data":
+                                 {
+                                  'carData': available_cabs,
+                                  'bookingData': {'pickup_location': pickup, 'drop_location': drop,
+                                                  'trip_type': trip_type, 'pickup_date': pickup_date,
+                                                  'drop_date':drop_date
+                                                  }
+                                  }
+
+                             },status=200)
+
+        except Exception as err:
+            return Response({"error": str(err)}, status=500)
 
 class BookCabView(APIView):
     permission_classes = [AllowAny]
@@ -239,7 +275,7 @@ class DriverOnboardingView(APIView):
         # if request.user.role != "admin":
         #     return Response({"error": "Only admins can onboard drivers"}, status=403)
         user_data = {
-            'username': "DR"+request.data.get('name')[:3],
+            'username': "DR"+request.data.get('phone_number'),
             'name':request.data.get('name'),
             'email':request.data.get('email'),
             'phone_number':request.data.get('phone_number'),
@@ -247,11 +283,24 @@ class DriverOnboardingView(APIView):
             'role':'driver',
             'first_name':request.data.get('name'),
         }
+        if User.objects.filter(phone_number=user_data['phone_number']):
+            return Response({'error': "This Mobile Number is Mapped Another Driver.", 'result': 'failure'},
+                            status=400)
+        if User.objects.filter(email=user_data['email']):
+            return Response({'error': "This Email is Mapped Another Driver.", 'result': 'failure'},
+                            status=400)
+        if Driver.objects.filter(license_number=request.data.get('license_number')):
+            return Response({'error': "This Licence is Mapped Another Driver.", 'result': 'failure'},
+                            status=400)
+        if Driver.objects.filter(aadhaar_doc=request.data.get('aadhaar_doc')):
+            return Response({'error': "This Addhar No is Mapped Another Driver.", 'result': 'failure'},
+                            status=400)
+
         serializer = SignupSerializer(data=user_data)
         if serializer.is_valid():
             serializer.save()
         else:
-            return Response({"error": "Phone number and Emial should be unique"}, status=422)
+            return Response({"error": "Phone number and Email should be unique"}, status=422)
 
 
         user = User.objects.filter(email=request.data.get('email'))[0].id
@@ -261,7 +310,7 @@ class DriverOnboardingView(APIView):
         serializer = DriverSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"message": "Driver onboarded successfully"}, status=201)
+            return Response({"message": "Driver onboarded successfully",'result':'success'}, status=201)
         return Response(serializer.errors, status=400)
 
 class AvailableBookingsView(APIView):
@@ -317,31 +366,39 @@ class AssignDriverView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # if request.user.role != "admin":
-        #     return Response({"error": "Only admins can assign drivers"}, status=403)
+        try:
+            # if request.user.role != "admin":
+            #     return Response({"error": "Only admins can assign drivers"}, status=403)
 
-        booking_id = request.data.get("booking_id")
-        driver_id = request.data.get("driver_id")
+            booking_id = request.data.get("booking_id")
+            driver_id = request.data.get("driver_id")
 
-        booking = Booking.objects.filter(id=booking_id, bidding_status="open")[0]
-        if not booking:
-            return Response({"error": "For This Booking Driver has been assigned"}, status=200)
-        driver = Driver.objects.filter(id=driver_id, is_available=True)[0]
-        if not driver:
-            return Response({"error": "Driver has been asigned to another Booking"}, status=200)
-        bidd =Bidding.objects.filter(booking=booking_id,driver=driver_id)
-        if not bidd:
-            return Response({"error": "Driver did not bidd for this booking"}, status=200)
+            booking = Booking.objects.filter(id=booking_id, bidding_status="open")
+            if not booking:
+                return Response({"error": "For This Booking Driver has been assigned"}, status=200)
+            driver = Driver.objects.filter(id=driver_id, is_available=True)
+            if not driver:
+                return Response({"error": "Driver has been asigned to another Booking"}, status=200)
 
+            bidd =Bidding.objects.filter(booking=booking_id,driver=driver_id)
+            if not bidd:
+                return Response({"error": "Driver did not bidd for this booking"}, status=200)
+            driver=driver[0]
+            booking=booking[0]
+            bidd=bidd[0]
 
-        booking.driver = driver
-        booking.bidding_status = "closed"
-        booking.save()
+            booking.driver = driver
+            booking.bidding_status = "closed"
+            booking.status = 'driver assigned'
+            booking.save()
 
-        driver.is_available = False
-        driver.save()
+            driver.is_available = False
+            driver.save()
 
-        return Response({"message": "Driver assigned successfully"},status=200)
+            return Response({"message": "Driver assigned successfully"},status=200)
+        except Exception as e:
+            return Response({"error": str(e),'result':'failuer'}, status=500)
+
 class AddCabView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -462,31 +519,19 @@ class AddCabView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        try:
-            data=request.data
-            cab = Cab(
-                cab_number=data.get("cab_number"),
-                cab_name=data.get("cab_name", ""),
-                cab_type=data.get("cab_type"),
-                price_per_km=data.get("price_per_km", 0),
-                is_available=data.get("is_available", True),
-                one_year_from=parse_date(data.get("one_year_from")),
-                one_year_to=parse_date(data.get("one_year_to")),
-                five_year_from=parse_date(data.get("five_year_from")),
-                five_year_to=parse_date(data.get("five_year_to")),
-                fitness_year_from=parse_date(data.get("fitness_year_from")),
-                fitness_year_to=parse_date(data.get("fitness_year_to")),
-                insurance_year_from=parse_date(data.get("insurance_year_from")),
-                insurance_year_to=parse_date(data.get("insurance_year_to")),
-                pollutions_year_from=parse_date(data.get("pollutions_year_from")),
-                pollutions_year_to=parse_date(data.get("pollutions_year_to")),
-                fule=data.get("fule", ""),
-            )
-            cab.save()
-            return Response({"message": "Cab added successfully"}, status=201)
-        except Exception as e:
-            return Response({"error": str(e)}, status=400)
 
+        pattern = r"^[A-Z]{2}\d{2}[A-Z]{2}\d{4}$"
+        if not re.match(pattern, request.data.get('cab_number')):
+          return Response({'error':"Invalid cab number format. Use format like MH12AB1234.", 'result': 'failure'}, status=400)
+
+        if Cab.objects.filter(cab_number=request.data.get('cab_number')).exists():
+            return Response({'error':"This cab number is already registered.",'result':'failure'}, status=400)
+
+        serializer = CabSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'result':'success',"message": "Cab added successfully"}, status=201)
+        return Response({'error':serializer.errors['cab_number']}, status=400)
 
 
 class AddCoupon(APIView):
@@ -597,63 +642,12 @@ class GetAutoComplete(APIView):
 
             try:
 
-                places_result = gmaps.places_autocomplete(query, types=["(cities)"])
+                places_result = gmaps.places_autocomplete(query, types=["geocode"])
                 city_names = [place["description"] for place in places_result]
 
                 return Response({"cities": city_names}, status=200)
             except Exception as e:
                 return Response({"error": str(e)}, status=500)
-
-
-class ApplyCouponAPIView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        user = request.user
-
-        booking_id = request.data.get("booking_id")
-        coupon_code = request.data.get("coupon_code")
-
-        try:
-            booking = Booking.objects.get(id=booking_id)
-        except Booking.DoesNotExist:
-            return Response({"error": "Invalid booking ID or unauthorized"}, status=400)
-
-        user=booking.user
-        # if booking.is_completed:
-        #     return Response({"error": "Cannot apply a coupon to a completed booking"}, status=400)
-
-        try:
-            coupon = Coupon.objects.get(code=coupon_code)
-        except Coupon.DoesNotExist:
-            return Response({"error": "Invalid coupon code"}, status=400)
-
-        # if not coupon.is_valid():
-        #     return Response({"error": "Coupon is expired or inactive"}, status=400)
-
-        # Check user usage
-        usage, _ = CouponUsage.objects.get_or_create(user=user, coupon=coupon)
-        if usage.usage_count >= coupon.usage_limit:
-            return Response({"error": "Coupon usage limit reached"}, status=400)
-
-        # Calculate discount
-        discount_amount = (booking.fare * coupon.discount_percentage) / 100
-        discount_amount = min(discount_amount, coupon.max_discount_amount)
-
-        # Apply discount
-        booking.discount_applied = discount_amount
-        booking.final_fare = booking.fare - discount_amount
-        booking.save()
-
-        # Update usage count
-        usage.usage_count += 1
-        usage.save()
-        serialize = BookingSerializer(booking)
-        return Response({
-            "message": "Coupon applied successfully",
-            "discount_amount": discount_amount,
-            "booking": serialize.data
-        }, status=200)
 
 
 class ApplyCouponAPIView(APIView):
@@ -798,18 +792,18 @@ class MyBookingAPIView(APIView):
 
 
 class fetchAllBookings(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
 
-    def get(self,request):
+    def get(self, request):
         try:
-            booking = Booking.objects.filter()#.select_related("driver", "user").order_by("-timestamp")
-            data=[]
-            if booking:
-                serialize = BookingAdminSerializer(booking,many=True)
-                data = serialize.data
-            return Response({"result":"success" , "data": data}, status=200)
+            bookings = Booking.objects.filter().select_related("driver", "user").order_by("-timestamp")
+            paginator = self.pagination_class()
+            paginated_bookings = paginator.paginate_queryset(bookings, request)
+            serializer = BookingAdminSerializer(paginated_bookings, many=True)
+            return paginator.get_paginated_response(serializer.data)
         except Exception as err:
-            return Response(str(err), 500)
+            return Response({"error": str(err)}, status=500)
 
 class deleteBookings(APIView):
     permission_classes = [AllowAny]
@@ -842,7 +836,7 @@ class deleteCoupon(APIView):
 
 
 class fetchAllBookingsAnalytics(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self,request):
         try:
@@ -880,50 +874,51 @@ class fetchAllDrivers(APIView):
 
 class fetchAllCabs(APIView):
     permission_classes = [AllowAny]
+    pagination_class = CustomPagination
 
-    def get(self,request):
+    def get(self, request):
         try:
-            cabs_data = Cab.objects.filter().order_by("-timestamp")
-            data=[]
-            if cabs_data:
-                serialize = CabSerializer(cabs_data,many=True)
-                data = serialize.data
-            return Response({"result":"success" , "data": data}, status=200)
+            cabs = Cab.objects.all().order_by('-id')
+            paginator = self.pagination_class()
+            paginated_cabs = paginator.paginate_queryset(cabs, request)
+            serializer = CabSerializer(paginated_cabs, many=True)
+            return paginator.get_paginated_response(serializer.data)
         except Exception as err:
-            return Response(str(err), 500)
+            return Response({"error": str(err)}, status=500)
+
+
 
 
 
 class fetchAllReviews(APIView):
     permission_classes = [AllowAny]
+    pagination_class = CustomPagination
 
-    def get(self,request):
+    def get(self, request):
         try:
-            rating_data = DriverRating.objects.filter().order_by("-created_at")
-            data=[]
-            if rating_data:
-                serialize = DriverRatingAdminSerializer(rating_data,many=True)
-                data = serialize.data
-            return Response({"result":"success" , "data": data}, status=200)
+            reviews = DriverRating.objects.all().order_by('-id')
+            paginator = self.pagination_class()
+            paginated_reviews = paginator.paginate_queryset(reviews, request)
+            serializer = DriverRatingAdminSerializer(paginated_reviews, many=True)
+            return paginator.get_paginated_response(serializer.data)
         except Exception as err:
-            return Response(str(err), 500)
-
+            return Response({"error": str(err)}, status=500)
 
 
 
 class fetchAllCoupons(APIView):
     permission_classes = [AllowAny]
+    pagination_class = CustomPagination
 
-    def get(self,request):
+    def get(self, request):
         try:
-            rating_data = Coupon.objects.filter().order_by("-created_at")
-            data=[]
-            if rating_data:
-                serialize = CouponSerializer(rating_data,many=True)
-                data = serialize.data
-            return Response({"result":"success" , "data": data}, status=200)
+            coupons = Coupon.objects.all().order_by('-id')
+            paginator = self.pagination_class()
+            paginated_coupons = paginator.paginate_queryset(coupons, request)
+            serializer = CouponSerializer(paginated_coupons, many=True)
+            return paginator.get_paginated_response(serializer.data)
         except Exception as err:
-            return Response(str(err), 500)
+            return Response({"error": str(err)}, status=500)
 
 
 
@@ -1007,7 +1002,7 @@ class signupUser(APIView):
             user_req = User.objects.create(
 
             )
-            check_if_Valid_otp=''#just to remove error
+            check_if_Valid_otp='' # just to trmove error
             if user_req:
                 refresh = RefreshToken.for_user(user_req)
                 return Response({"result" : "success", "data":check_if_Valid_otp, "user":True, "access": str(refresh.access_token), "refresh": str(refresh)}, 200)
@@ -1076,13 +1071,9 @@ class CabUpdate(APIView):
 
     def post(self, request):
         try:
+            id = request.data.get("id")
             data=request.data
-            id = data.get("id")
-            cab_name = request.data.get("cab_name")
-            cab_number = request.data.get("cab_number")
-            price_per_km = request.data.get("price_per_km")
-            is_available = request.data.get("is_available")
-            cab_type = request.data.get("cab_type")
+
 
             if not id:
                 return Response({"error": "Id is required"}, status=400)
@@ -1109,6 +1100,7 @@ class CabUpdate(APIView):
             cab.pollutions_year_to = parse_date(data.get("pollutions_year_to")) or cab.pollutions_year_to
             cab.fule = data.get("fule", cab.fule)
 
+
             cab.save()
 
             return Response({"result": "success"}, status=200)
@@ -1125,7 +1117,7 @@ class DeleteDriver(APIView):
             id = request.data.get("id")
 
 
-            if not id:
+            if  id:
                 return Response({"error": "Id is required"}, status=400)
 
             driver = Driver.objects.select_related("user").filter(id=id).first()
@@ -1168,65 +1160,87 @@ class DeleteCab(APIView):
         except Exception as err:
             return Response({"error": str(err)}, status=500)
 
-class CreateBookingView(APIView):
+
+class DeleteReview(APIView):
     permission_classes = [AllowAny]
+
     def post(self, request):
         try:
-            serializer = BookingSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    'message': 'Booking created successfully',
-                    'data': serializer.data
-                }, status=status.HTTP_201_CREATED)
-            return Response({
-                'error': serializer.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
+            id = request.data.get("id")
+
+            if not id:
+                return Response({"error": "Id is required"}, status=400)
+
+            dr = DriverRating.objects.filter(id=id).first()
+
+            if not dr:
+                return Response({"error": "Review not found"}, status=404)
+
+            dr.delete()
+
+            return Response({"result": "success"}, status=200)
+
+        except Exception as err:
+            return Response({"error": str(err)}, status=500)
+class AdminDashboardData(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+
+            bookingOngoing = Booking.objects.filter(status="ongoing").count()
+            bookingCompleted = Booking.objects.filter(status="completed").count()
+            total_driver=Driver.objects.all().count()
+            ideal_driver=Driver.objects.filter(is_available=True).count()
+            total_cab=Cab.objects.all().count()
+            ideal_cab=Cab.objects.filter(is_available=True).count()
+            initiated_booking=Booking.objects.filter(status='initiated')
+            initiated_booking=BookingAdminSerializer(initiated_booking,many=True).data
+            data = {
+                "bookingOngoing":bookingOngoing,
+                "bookingCompleted":bookingCompleted,
+                'total_driver':total_driver,
+                'ideal_driver':ideal_driver,
+                'total_cab':total_cab,
+                'ideal_cab':ideal_cab,
+                'initiated_booking':initiated_booking
+
+            }
+            return Response({"result":"success" , "data": data}, status=200)
         except Exception as err:
             return Response({"error": str(err)}, status=500)
 
-class VendorRequestView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        try:
-            serializer = VendorRequestSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    "result": "success",
-                    "message": "Vendor request submitted successfully",
-                    "data": serializer.data
-                }, status=201)
-            return Response({
-                "result": "error",
-                "message": "Invalid data",
-                "errors": serializer.errors
-            }, status=400)
-        except Exception as e:
-            return Response({
-                "result": "error",
-                "message": str(e)
-            }, status=500)
+class AdminProfileData(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
-            page = int(request.GET.get('page', 1))
-            page_size = int(request.GET.get('page_size', 10))
-            
-            vendor_requests = VendorRequest.objects.all().order_by('-created_at')
-            total = vendor_requests.count()
-            
-            # Calculate pagination
-            start = (page - 1) * page_size
-            end = start + page_size
-            vendor_requests = vendor_requests[start:end]
-            
-            serializer = VendorRequestSerializer(vendor_requests, many=True)
+
+
+            data= {
+                'phone_number':request.user.phone_number,
+           'first_name':request.user.first_name,
+           'email':request.user.email
+
+            }
+            return Response({"result":"success" , "data": data}, status=200)
+        except Exception as err:
+            return Response({"error": str(err)}, status=500)
+
+
+class VendorBookingListView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        try:
+
+            user=request.user
+            status = request.data.get('status')
+            booking = Booking.objects.filter(status=status,vendor__user=user)
+            serializer = BookingSerializer(booking, many=True)
             return Response({
                 "result": "success",
                 "data": serializer.data,
-                "total": total
+
             }, status=200)
         except Exception as e:
             return Response({
@@ -1234,105 +1248,6 @@ class VendorRequestView(APIView):
                 "message": str(e)
             }, status=500)
 
-class VendorRequestActionView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        try:
-            request_id = request.data.get('request_id')
-            action = request.data.get('action')  # 'approve' or 'reject'
-            
-            if not request_id or not action:
-                return Response({
-                    "result": "error",
-                    "message": "Request ID and action are required"
-                }, status=400)
-
-            vendor_request = VendorRequest.objects.get(id=request_id)
-            
-            if action == 'approve':
-                # Generate vendor ID
-                vendor_id = f"VENDOR{str(vendor_request.id).zfill(6)}"
-                
-                # Create user
-                user = User.objects.create_user(
-                    username=vendor_request.email,
-                    email=vendor_request.email,
-                    password=request.data.get('password', 'default_password123')
-                )
-                
-                # Create vendor
-                Vendor.objects.create(
-                    vendor_id=vendor_id,
-                    vendor_request=vendor_request,
-                    user=user
-                )
-                
-                vendor_request.status = 'approved'
-                vendor_request.save()
-                
-                return Response({
-                    "result": "success",
-                    "message": "Vendor request approved successfully",
-                    "data": {
-                        "vendor_id": vendor_id,
-                        "email": vendor_request.email
-                    }
-                }, status=200)
-                
-            elif action == 'reject':
-                vendor_request.status = 'rejected'
-                vendor_request.save()
-                
-                return Response({
-                    "result": "success",
-                    "message": "Vendor request rejected successfully"
-                }, status=200)
-                
-            else:
-                return Response({
-                    "result": "error",
-                    "message": "Invalid action"
-                }, status=400)
-                
-        except VendorRequest.DoesNotExist:
-            return Response({
-                "result": "error",
-                "message": "Vendor request not found"
-            }, status=404)
-        except Exception as e:
-            return Response({
-                "result": "error",
-                "message": str(e)
-            }, status=500)
-
-class VendorListView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        try:
-            page = int(request.GET.get('page', 1))
-            page_size = int(request.GET.get('page_size', 10))
-            
-            vendors = Vendor.objects.all().order_by('-created_at')
-            total = vendors.count()
-            
-            # Calculate pagination
-            start = (page - 1) * page_size
-            end = start + page_size
-            vendors = vendors[start:end]
-            
-            serializer = VendorSerializer(vendors, many=True)
-            return Response({
-                "result": "success",
-                "data": serializer.data,
-                "total": total
-            }, status=200)
-        except Exception as e:
-            return Response({
-                "result": "error",
-                "message": str(e)
-            }, status=500)
 
 class CreateVendorView(APIView):
     permission_classes = [AllowAny]
@@ -1347,9 +1262,7 @@ class CreateVendorView(APIView):
                 'company_name': request.data.get('company_name'),
                 'pan_number': request.data.get('pan_number'),
                 'gst_number': request.data.get('gst_number'),
-                'status': 'approved'  # Directly approve since it's created by admin
-            }
-            
+                'status': 'approved' } # Directly approve since it's created by admin
             vendor_request_serializer = VendorRequestSerializer(data=vendor_request_data)
             if not vendor_request_serializer.is_valid():
                 return Response({
@@ -1385,7 +1298,7 @@ class CreateVendorView(APIView):
                     "email": vendor_request.email
                 }
             }, status=201)
-            
+
         except Exception as e:
             return Response({
                 "result": "error",
@@ -1393,19 +1306,28 @@ class CreateVendorView(APIView):
             }, status=500)
 
 
-class VendorBookingListView(APIView):
+class VendorListView(APIView):
+    permission_classes = [AllowAny]
     permission_classes = [AllowAny]
 
     def get(self, request):
         try:
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
 
-            user=request.user
-            status = request.data.get('status')
-            booking = Booking.objects.filter(status=status,vendor__user=user)
-            serializer = BookingSerializer(booking, many=True)
+            vendors = Vendor.objects.all().order_by('-created_at')
+            total = vendors.count()
+
+            # Calculate pagination
+            start = (page - 1) * page_size
+            end = start + page_size
+            vendors = vendors[start:end]
+
+            serializer = VendorSerializer(vendors, many=True)
             return Response({
                 "result": "success",
                 "data": serializer.data,
+                "total": total
 
             }, status=200)
         except Exception as e:
@@ -1415,4 +1337,122 @@ class VendorBookingListView(APIView):
             }, status=500)
 
 
+class VendorRequestActionView(APIView):
+    permission_classes = [AllowAny]
 
+    def post(self, request):
+        try:
+            request_id = request.data.get('request_id')
+            action = request.data.get('action')  # 'approve' or 'reject'
+
+            if not request_id or not action:
+                return Response({
+                    "result": "error",
+                    "message": "Request ID and action are required"
+                }, status=400)
+            vendor_request = VendorRequest.objects.get(id=request_id)
+
+            if action == 'approve':
+                # Generate vendor ID
+                vendor_id = f"VENDOR{str(vendor_request.id).zfill(6)}"
+
+                # Create user
+                user = User.objects.create_user(
+                    username=vendor_request.email,
+                    email=vendor_request.email,
+                    password=request.data.get('password', 'default_password123')
+                )
+
+                # Create vendor
+                Vendor.objects.create(
+                    vendor_id=vendor_id,
+                    vendor_request=vendor_request,
+                    user=user
+                )
+
+                vendor_request.status = 'approved'
+                vendor_request.save()
+
+                return Response({
+                    "result": "success",
+                    "message": "Vendor request approved successfully",
+                    "data": {
+                        "vendor_id": vendor_id,
+                        "email": vendor_request.email
+                    }
+                }, status=200)
+
+            elif action == 'reject':
+                vendor_request.status = 'rejected'
+                vendor_request.save()
+
+                return Response({
+                    "result": "success",
+                    "message": "Vendor request rejected successfully"
+                }, status=200)
+
+            else:
+                return Response({
+                    "result": "error",
+                    "message": "Invalid action"
+                }, status=400)
+
+        # except VendorRequest.DoesNotExist:
+        #     return Response({
+        #     "result": "error",
+        #     "message": "Vendor request not found"
+        # }, status=404)
+        #
+        except Exception as e:
+            return Response({
+            "result": "error",
+            "message": str(e)
+          }, status=500)
+
+class VendorRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+
+        try:
+            serializer = VendorRequestSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    "result": "success",
+                    "message": "Vendor request submitted successfully",
+                    "data": serializer.data
+                }, status=201)
+            return Response({
+                "result": "error",
+                "message": "Invalid data",
+                "errors": serializer.errors
+            }, status=400)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+
+class CreateBookingView(APIView):
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            serializer = BookingSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    'message': 'Booking created successfully',
+                    'data': serializer.data
+                }, status=status.HTTP_201_CREATED)
+            return Response({
+                'error': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)

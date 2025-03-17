@@ -5,14 +5,17 @@ from .views import SignupView, LoginView, UserDetailView, CabAvailabilityView, B
     RateDriverAPIView, DriverRatingsAPIView, GetAutoComplete, ApplyCouponAPIView, CheckCouponAPIView, MyBookingAPIView, \
     PhoneOtp, PhoneOtpVerify, signupUser, fetchAllBookings, fetchAllDrivers, fetchAllCabs, fetchAllReviews, \
     fetchAllCoupons, fetchAllBookingsAnalytics, AddCoupon, deleteBookings, deleteCoupon, changeBookingStatus, \
-    DriverUpdate, CabUpdate, DeleteDriver, DeleteCab, CreateBookingView, VendorRequestView, VendorRequestActionView, \
+    DriverUpdate, CabUpdate, DeleteDriver, DeleteCab, ResetPasswordView, AdminDashboardData, AdminProfileData, \
+    DeleteReview,    DriverUpdate, CabUpdate, DeleteDriver, DeleteCab, CreateBookingView, VendorRequestView, VendorRequestActionView, \
     VendorListView, CreateVendorView, VendorBookingListView
-
+from django.conf import settings
+from django.conf.urls.static import static
 urlpatterns = [
     #users
     path("signup/", SignupView.as_view()),
     path("login/", LoginView.as_view()),
     path("user/", UserDetailView.as_view()),
+    path("change-password/",ResetPasswordView.as_view()),
     
     path("cab-availability/", CabAvailabilityView.as_view()),
     path("create-booking/", BookCabView.as_view()),
@@ -49,6 +52,7 @@ urlpatterns = [
     path("cab-update-submit/",CabUpdate.as_view()),
     path("delete-driver/",DeleteDriver.as_view()),
     path("delete-cab/",DeleteCab.as_view()),
+    path("delete-review/",DeleteReview.as_view()),
 
 
 
@@ -59,9 +63,10 @@ urlpatterns = [
     path("add-cab/", AddCabView.as_view()),
     path("add-coupon/", AddCoupon.as_view()),
     path("admin-payment-overview/", AdminPaymentOverviewView.as_view()),
+    path("admin-dashboard-data/", AdminDashboardData.as_view()),
     path('create-bookingsds/', CreateBookingView.as_view(), name='create-booking'),
-
-    # Vendor management
+    path("admin-profile-data/", AdminProfileData.as_view()),
+                  # Vendor management
     path('vendor-requests/', VendorRequestView.as_view()),
     path('vendor-requests/action/', VendorRequestActionView.as_view()),
     path('vendors/', VendorListView.as_view()),
@@ -69,4 +74,5 @@ urlpatterns = [
     path('vendor-booking/', VendorBookingListView.as_view()),
 
 
-]
+
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

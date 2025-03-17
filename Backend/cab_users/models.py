@@ -13,12 +13,12 @@ class User(AbstractUser):
 
     ROLE_CHOICES = [('admin', 'Admin'), ('driver', 'Driver'), ('customer', 'Customer')]
 
-    email = models.EmailField(unique=True,null=False)
+    email = models.EmailField(null=True)
     phone_number = models.CharField(max_length=10, unique=True,null=False)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=CUSTOMER)
 
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["username", "phone_number"]
+    USERNAME_FIELD = "phone_number"
+    REQUIRED_FIELDS = ["username"]
 
 class Driver(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={"role": "driver"})
@@ -33,6 +33,7 @@ class Driver(models.Model):
     total_score = models.PositiveIntegerField(default=0)
     total_trip= models.PositiveIntegerField(default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
+    photo = models.ImageField(upload_to='driver_photo/',null=True)
 
     @property
     def average_rating(self):
@@ -100,7 +101,7 @@ class Booking(models.Model):
     customer_email = models.EmailField(max_length=100, blank=True, null=True)
     pickup_location = models.CharField(max_length=255)
     drop_location = models.CharField(max_length=255)
-    trip_type = models.CharField(max_length=20, choices=[('one_way', 'One Way'), ('round', 'Round Trip')])
+    trip_type = models.CharField(max_length=20, choices=TRIP_TYPE_CHOICES)
     pickup_date = models.DateTimeField()
     drop_date = models.DateTimeField(null=True, blank=True)
     trip_km = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -192,7 +193,4 @@ class CouponUsage(models.Model):
 
     class Meta:
         unique_together = ('user', 'coupon')  # Ensure a user-coupon pair is unique
-
-
-
 
