@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "react-bootstrap";
 
-const AnnualProfit = ({data}) => {
+const IdealDriver = ({data}) => {
   // const [Chart, setChart] = useState();
   // useEffect(() => {
   //   import("react-apexcharts").then((mod) => {
@@ -105,7 +105,7 @@ const AnnualProfit = ({data}) => {
         <Card.Body className="p-4">
           <div className="d-flex justify-content-between">
             <div className="mb-35">
-              <span>Ideal Driver</span>
+              <span>Ideal Cab</span>
               <h3 className="fs-20 mt-1 mb-0">{data}</h3>
             </div>
 
@@ -131,4 +131,4 @@ const AnnualProfit = ({data}) => {
   );
 };
 
-export default AnnualProfit;
+export default IdealDriver;

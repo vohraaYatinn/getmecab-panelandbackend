@@ -5,160 +5,23 @@ import Image from "next/image";
 import Link from "next/link";
 import Pagination from "./Pagination";
 import SearchForm from "../SearchForm";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import EditCab from "./EditCab";
 import ActionSheet from "@/components/ActionSheet/ActionSheet";
-const publishedProductsData = [
-  
-  {
-    id: "#JAN-999",
-    img: "/images/product-1.jpg",
-    title: "Smart Band",
-    detailsLink: "/ecommerce/product-details",
-    date: "08 Jun 2024",
-    category: "Watch",
-    price: "$35.00",
-    order: 75,
-    stock: "750",
-    amount: "$2,625",
-    rating: "5.00 (141 reviews)",
-    status: "published",
-  },
-  {
-    id: "#JAN-998",
-    img: "/images/product-2.jpg",
-    title: "Headphone",
-    detailsLink: "/ecommerce/product-details",
-    date: "07 Jun 2024",
-    category: "Electronics",
-    price: "$49.00",
-    order: 25,
-    stock: "825",
-    amount: "$1,225",
-    rating: "5.00 (69 reviews)",
-    status: "draft",
-  },
-  {
-    id: "#JAN-997",
-    img: "/images/product-3.jpg",
-    title: "iPhone 15 Plus",
-    detailsLink: "/ecommerce/product-details",
-    date: "06 Jun 2024",
-    category: "Apple",
-    price: "$99.00",
-    order: 55,
-    stock: "Stock Out",
-    amount: "$5,445",
-    rating: "5.00 (99 reviews)",
-    status: "published",
-  },
-  {
-    id: "#JAN-996",
-    img: "/images/product-4.jpg",
-    title: "Bluetooth Speaker",
-    detailsLink: "/ecommerce/product-details",
-    date: "05 Jun 2024",
-    category: "Google",
-    price: "$59.00",
-    order: 40,
-    stock: "535",
-    amount: "$2,360",
-    rating: "4.00 (75 reviews)",
-    status: "published",
-  },
-  {
-    id: "#JAN-995",
-    img: "/images/product-5.jpg",
-    title: "Airbuds 2nd Gen",
-    detailsLink: "/ecommerce/product-details",
-    date: "04 Jun 2024",
-    category: "Headphone",
-    price: "$79.00",
-    order: 56,
-    stock: "460",
-    amount: "$4,424",
-    rating: "5.00 (158 reviews)",
-    status: "draft",
-  },
-  {
-    id: "#JAN-999",
-    img: "/images/product-1.jpg",
-    title: "Smart Band",
-    detailsLink: "/ecommerce/product-details",
-    date: "08 Jun 2024",
-    category: "Watch",
-    price: "$35.00",
-    order: 75,
-    stock: "750",
-    amount: "$2,625",
-    rating: "5.00 (141 reviews)",
-    status: "published",
-  },
-  {
-    id: "#JAN-998",
-    img: "/images/product-2.jpg",
-    title: "Headphone",
-    detailsLink: "/ecommerce/product-details",
-    date: "07 Jun 2024",
-    category: "Electronics",
-    price: "$49.00",
-    order: 25,
-    stock: "825",
-    amount: "$1,225",
-    rating: "5.00 (69 reviews)",
-    status: "draft",
-  },
-  {
-    id: "#JAN-997",
-    img: "/images/product-3.jpg",
-    title: "iPhone 15 Plus",
-    detailsLink: "/ecommerce/product-details",
-    date: "06 Jun 2024",
-    category: "Apple",
-    price: "$99.00",
-    order: 55,
-    stock: "Stock Out",
-    amount: "$5,445",
-    rating: "5.00 (99 reviews)",
-    status: "published",
-  },
-  {
-    id: "#JAN-996",
-    img: "/images/product-4.jpg",
-    title: "Bluetooth Speaker",
-    detailsLink: "/ecommerce/product-details",
-    date: "05 Jun 2024",
-    category: "Google",
-    price: "$59.00",
-    order: 40,
-    stock: "535",
-    amount: "$2,360",
-    rating: "4.00 (75 reviews)",
-    status: "published",
-  },
-  {
-    id: "#JAN-995",
-    img: "/images/product-5.jpg",
-    title: "Airbuds 2nd Gen",
-    detailsLink: "/ecommerce/product-details",
-    date: "04 Jun 2024",
-    category: "Headphone",
-    price: "$79.00",
-    order: 56,
-    stock: "460",
-    amount: "$4,424",
-    rating: "5.00 (158 reviews)",
-    status: "draft",
-  },
-];
+import {test_url_images } from "../../../../config/environment"
+import { deleteCab } from "@/urls/urls";
+import AlertMessage from "@/components/AlertMessage/AlertMessage";
+import useAxios from "@/network/useAxios";
 
-const PublishedProducts = ({data,setSelectId,setAlert}) => {
+
+const AllProducts = (data,setFetchNew) => {
+//  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState({ message: "", variant: "" });
+  const [isModalOpenAction, setIsModalOpenAction] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [titleMessage,setTitleMessage] = useState({title:'',message:''})
-  const [cabId,setCabId] = useState(null)
-  const actionConfirm = () =>{
-    setSelectId(cabId)
-  }
+  const [titleMessage, setTitleMessage] = useState({title:'', message:''});
+  const [cabId, setCabId] = useState(null);
   const [formData, setFormData] = useState({
     id:'',
     cab_number: "",
@@ -169,17 +32,67 @@ const PublishedProducts = ({data,setSelectId,setAlert}) => {
   });
   const [showModal, setShowModal] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [tableData, setTableData] = useState([]);
+  const [Select_driver_id,setSelect_driver_id] = useState(null)
+  const [cabDeleteRespnse,cabDeleteError,cabDeleteLoading,cabDeleteSubmit] = useAxios();
+  const actionConfirm = () =>{
+    cabDeleteSubmit(deleteCab({id:Select_driver_id}))
+  }
+  useEffect(()=>{
+    if(cabDeleteRespnse['result'] == 'success'){
+      setAlert({ message: cabDeleteRespnse['result'], variant: "success" });
+      setIsModalOpenAction(false);
+      setSelect_driver_id(null)
+      setFetchNew(true)
+    }
+  },[cabDeleteRespnse])
+  useEffect(()=>{
+    if(cabDeleteError && cabDeleteError['message']){
+      setAlert({ message: cabDeleteError['message'], variant: "danger" });
+      setIsModalOpenAction(false);
+    }
+  },[cabDeleteError])
+  useEffect(()=>{
+    console.log("console",tableData)
+  },[tableData])
+  useEffect(() => {
+    if (data) {
+      setTableData(data.data || []);
+      setTotalPages(data.total_pages || 1);
+      setTotalItems(data.count || 0);
+      setCurrentPage(data.current_page || 1);
+    }
+  }, [data]);
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchData(newPage);
+    }
+  };
 
-const openModal=(value)=>{
-  console.log(value)
-  setFormData(value)
-  setShowModal(true)
 
-}
+
+
+  const openModal = (value) => {
+    setFormData(value);
+    setShowModal(true);
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <>
+          <AlertMessage
+        message={alert.message}
+        variant={alert.variant}
+        onClose={() => setAlert({ message: "", variant: "" })}
+      />
       <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-lg-4 mb-3">
-        <SearchForm />
+       
 
         <Link
           href="/cabs/create-cab/"
@@ -192,98 +105,124 @@ const openModal=(value)=>{
         </Link>
       </div>
       <div className="default-table-area all-products">
-  <div className="table-responsive">
-    <Table className="align-middle">
-      <thead>
-        <tr>
-          <th scope="col">ID</th>
-          <th scope="col">Cab Number</th>
-          <th scope="col">Cab Name</th>
-          <th scope="col">Cab Type</th>
-          <th scope="col">Price Per Km</th>
-          <th scope="col">Availability</th>
-          <th scope="col">Timestamp</th>
-          <th scope="col">Action</th>
-        </tr>
-      </thead>
+        <div className="table-responsive">
+          <Table className="align-middle">
+            <thead>
+              <tr>
+                <th scope="col">ID</th> 
+                <th scope="col">Cab Image</th>
+                <th scope="col">Cab Number</th>
+                <th scope="col">Cab Name</th>
+                <th scope="col">Cab Type</th>
+                <th scope="col">Price Per Km</th>
+                <th scope="col">Availability</th>
+                <th scope="col">Timestamp</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
 
-      <tbody>
-        {data &&
-          data.map((value, i) => (
-            <tr key={i}>
-              <td>{value.id}</td>
-              <td>{value.cab_number}</td>
-              <td>{value.cab_name}</td>
-              <td>{value.cab_type}</td>
-              <td>{value.price_per_km} ₹</td>
-              <td>
-                <span
-                  className={`badge bg-opacity-10 p-2 fs-12 fw-normal text-capitalize ${
-                    value.is_available ? "text-success" : "text-danger"
-                  }`}
-                >
-                  {value.is_available ? "Available" : "Not Available"}
-                </span>
-              </td>
-              <td>{new Date(value.timestamp).toLocaleString()}</td>
-              <td>
-                <div className="d-flex align-items-center gap-1">
-                  <button className="ps-0 border-0 bg-transparent lh-1 position-relative top-2">
-                    <span className="material-symbols-outlined fs-16 text-primary">
-                      visibility
+            <tbody>
+              {tableData && tableData?.data?.map((value, i) => (
+                <tr key={i}>
+                  <td>{value.id}</td>
+                  <td>
+            <img
+              src={`${test_url_images}${value.photo}`}  // Assuming 'photo' contains the image URL
+            alt="Vehicle"
+            style={{ width: "80px", height: "50px", objectFit: "cover", borderRadius: "5px" }}
+          />
+        </td>
+                  <td>{value.cab_number}</td>
+                  <td>{value.cab_name}</td>
+                  <td>{value.cab_type}</td>
+                  <td>{value.price_per_km} ₹</td>
+                  <td>
+                    <span
+                      className={`badge bg-opacity-10 p-2 fs-12 fw-normal text-capitalize ${
+                        value.is_available ? "text-success" : "text-danger"
+                      }`}
+                    >
+                      {value.is_available ? "Available" : "Not Available"}
                     </span>
-                  </button>
+                  </td>
+                  <td>{new Date(value.timestamp).toLocaleString()}</td>
+                  <td>
+                    <div className="d-flex align-items-center gap-1">
+                      {/* <button className="ps-0 border-0 bg-transparent lh-1 position-relative top-2">
+                        <span className="material-symbols-outlined fs-16 text-primary">
+                          visibility
+                        </span>
+                      </button> */}
 
-                  <button className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
-                  onClick={() =>{ openModal(value)
-                    setTitleMessage({title:'Edit Cab',message:"Are you sure you want to edit this cab detail?"})
-                   }
-                  }>
-                    <span className="material-symbols-outlined fs-16 text-body">
-                      edit
-                    </span>
-                  </button>
+                      <button
+                        className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
+                        onClick={() => {
+                          openModal(value);
+                          setTitleMessage({
+                            title: 'Edit Cab',
+                            message: "Are you sure you want to edit this cab detail?"
+                          });
+                        }}
+                      >
+                        <span className="material-symbols-outlined fs-16 text-body">
+                          edit
+                        </span>
+                      </button>
 
-                  <button className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
-                  onClick={()=>{
-                    setCabId(value.id)
-                    setIsModalOpen(true)
-                    setTitleMessage({title:'Delete Cab',message:"Are you sure you want to delete this cab detail?"})
-                  
-                  }}>
-                    <span className="material-symbols-outlined text-danger fs-16">
-                      delete
-                    </span>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-      </tbody>
-    </Table>
-  </div>
 
-  {/* Pagination */}
-  <Pagination />
-</div>
-<ActionSheet
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onConfirm={actionConfirm}
-                title={titleMessage.title}
-                message={titleMessage.message}
-            />
-<EditCab
- 
-          show={showModal} 
+                      <button
+                        className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
+                        onClick={() => {
+                          setIsModalOpenAction(true);
+                          setSelect_driver_id(value.id)
+                          setTitleMessage({
+                            title: 'Delete Cab',
+                            message: "Are you sure you want to delete this cab ?"
+                          });
+                        }}
+                      >
+                        <span className="material-symbols-outlined fs-16 text-body">
+                          delete
+                        </span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
+      </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+      />
+
+      {showModal && (
+        <EditCab
+          show={showModal}
           handleClose={() => setShowModal(false)}
-          formData={formData} 
-          setFormData={setFormData} 
-          setAlert={setAlert}
-  
+          formData={formData}
+          setFormData={setFormData}
+          setAlert={setAlert} 
+          alert={alert}
         />
+        
+      )}
+            <ActionSheet
+                isOpen={isModalOpenAction}
+                onClose={() => setIsModalOpenAction(false)}
+                onConfirm={actionConfirm}
+                title="Edit Cab"
+                message="Are you sure you want to edit cab detail?"
+                alert={alert}
+                loading={cabDeleteLoading}
+            />
     </>
   );
 };
 
-export default PublishedProducts;
+export default AllProducts;

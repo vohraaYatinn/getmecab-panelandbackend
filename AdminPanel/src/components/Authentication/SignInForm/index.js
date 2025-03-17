@@ -4,11 +4,47 @@ import { Row, Col, Form } from "react-bootstrap";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import useAxios from "@/network/useAxios";
+import { login } from "@/urls/urls";
+import { useEffect ,useState} from "react";
+import AlertMessage from '@/components/AlertMessage/AlertMessage';
 
 const SignInForm = () => {
   const route = useRouter()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [alert, setAlert] = useState({ message: "", variant: "" });
+  const [loginResponce,
+    loginError,
+          loginLoading,
+          loginSubmit
+  ] = useAxios()
+  const loginFun= async (e) => {
+    e.preventDefault();
+    loginSubmit(login({ email:email,password:password}))
+  }
+
+  useEffect(()=>{
+    console.log(loginResponce)
+if(loginResponce['access']){
+  const token = loginResponce['access']; 
+  localStorage.setItem("token", token);
+
+  route.push("/dashboard")
+}
+  },[loginResponce])
+
+
+  useEffect(()=>{
+    console.log(loginError)
+    if(loginError['message']){
+setAlert({message:'Invalid credentials',variant:'danger'})
+    }
+      },[loginError])
+  
   return (
     <>
+        
       <div className="auth-main-content m-auto m-1230 px-3">
         <Row className="align-items-center">
           <Col lg={6} className="d-none d-lg-block">
@@ -45,48 +81,46 @@ const SignInForm = () => {
                 Sign In with admin account
               </p>
 
-          
+              <AlertMessage
+        message={alert.message}
+        variant={alert.variant}
+        onClose={() => setAlert({ message: "", variant: "" })}
+      />
+              <Form onSubmit={loginFun}>
+  <Form.Group className="mb-4">
+    <label className="label text-secondary">Email Address</label>
+    <Form.Control
+      type="email"
+      className="h-55"
+      placeholder="example@trezo.com"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+    />
+  </Form.Group>
 
-              <Form>
-                <Form.Group className="mb-4">
-                  <label className="label text-secondary">Email Address</label>
-                  <Form.Control
-                    type="email"
-                    className="h-55"
-                    placeholder="example@trezo.com"
-                  />
-                </Form.Group>
+  <Form.Group className="mb-4">
+    <label className="label text-secondary">Password</label>
+    <Form.Control
+      type="password"
+      className="h-55"
+      placeholder="Type password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+    />
+  </Form.Group>
 
-                <Form.Group className="mb-4">
-                  <label className="label text-secondary">Password</label>
-                  <Form.Control
-                    type="password"
-                    className="h-55"
-                    placeholder="Type password"
-                  />
-                </Form.Group>
-
-
-                <Form.Group className="mb-4">
-                  <button
-                    
-                    className="btn btn-primary fw-medium py-2 px-3 w-100"
-                    onClick={(e)=>{
-                      e.preventDefault()
-                      route.push("/dashboard")
-                    }}
-                  >
-                    <div className="d-flex align-items-center justify-content-center py-1">
-                      <span className="material-symbols-outlined fs-20 text-white me-2">
-                        login
-                      </span>
-                      <span>Sign In</span>
-                    </div>
-                  </button>
-                </Form.Group>
-
-                
-              </Form>
+  <Form.Group className="mb-4">
+    <button  
+      type="submit"  // ADD THIS TO PREVENT RELOAD
+      className="btn btn-primary fw-medium py-2 px-3 w-100"
+    >
+      <div className="d-flex align-items-center justify-content-center py-1">
+        <span className="material-symbols-outlined fs-20 text-white me-2">login</span>
+        <span>Sign In</span>
+      </div>
+    </button>
+  </Form.Group>
+</Form>
             </div>
           </Col>
         </Row>

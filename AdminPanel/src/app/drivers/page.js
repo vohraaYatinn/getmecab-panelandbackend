@@ -7,6 +7,7 @@ import useAxios from "@/network/useAxios";
 import { getDriversAdmin,deleteDriver } from "@/urls/urls";
 import { useEffect } from "react";
 import AlertMessage from "@/components/AlertMessage/AlertMessage";
+import {test_url_images } from "../../config/environment"
 export default function Page() {
     
   const [data, setData] = useState([])
@@ -29,7 +30,6 @@ export default function Page() {
 useEffect(()=>{
 if (selectId){
 actionSubmit(deleteDriver({id:selectId}))
-setSelectId(null)
 }
 },[selectId])
 
@@ -43,6 +43,7 @@ useEffect(()=>{
   if(actionResponse?.result == "success" ){
    fetchActivityByIdfunction()
      setAlert({ message: actionResponse?.result, variant: "success" });
+     setSelectId(null)
   }
 },[actionResponse])
 
@@ -80,6 +81,7 @@ useEffect(()=>{
       <TeamMembers data={data} setSelectId={setSelectId} 
        actionResponse={actionResponse} actionLoading={actionLoading}
        actionSubmit = {actionSubmit}
+       actionError={actionError}
        />
     </>
   );

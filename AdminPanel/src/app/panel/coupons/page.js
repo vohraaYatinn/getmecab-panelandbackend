@@ -6,6 +6,7 @@ import { useState } from "react";
 import useAxios from "@/network/useAxios";
 import { deleteCoupon, getAllCoupons } from "@/urls/urls";
 import { useEffect } from "react";
+import AlertMessage from "@/components/AlertMessage/AlertMessage";
 
 export default function Page() {
   const [data, setData] = useState([])
@@ -27,25 +28,36 @@ export default function Page() {
     actionLoading,
     actionFetch,
   ] = useAxios();
+  const [alert, setAlert] = useState({ message: "", variant: "" });
   const fetchActivityByIdfunction = () => {
     driversFetch(getAllCoupons({}));
   };
   const deleteCouponFunc = (id) => {
     actionFetch(deleteCoupon({id:id}));
   };
+  useEffect(()=>{
+    if(actionResponse?.result == "success"){
+      setAlert({ message: actionResponse?.result, variant: "success" });
+    }
+  },[actionResponse])
+  useEffect(()=>{
+    if(actionError && actionError['message']){
+      setAlert({ message: actionError['message'], variant: "danger" });
+    }
+  },[actionError])
 useEffect(()=>{
   fetchActivityByIdfunction()
 },[bookingResponse, actionResponse])
 useEffect(()=>{
   if(driversResponse?.result == "success"){
-    setData(driversResponse?.data)
+    setData(driversResponse)
     console.log(driversResponse?.data)
   }
 },[driversResponse])
   return (
     <>
       <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-        <h3 className="mb-0">Deals</h3>
+        <h3 className="mb-0">Coupons</h3>
  
         <Breadcrumb className="breadcrumb-page-list align-items-center mb-0 lh-1">
           <Breadcrumb.Item href="/dashboard/ecommerce/">
@@ -60,8 +72,12 @@ useEffect(()=>{
           </Breadcrumb.Item>
         </Breadcrumb>
       </div>
-  
-      <DealsTable data={data} bookingFetch={bookingFetch} deleteCoupon={deleteCouponFunc}/>
+      <AlertMessage
+        message={alert.message}
+        variant={alert.variant}
+        onClose={() => setAlert({ message: "", variant: "" })}
+      />
+      <DealsTable data={data} bookingFetch={bookingFetch} deleteCoupon={deleteCouponFunc} actionLoading={actionLoading}  alert={alert}/>
     </>
   );
 }

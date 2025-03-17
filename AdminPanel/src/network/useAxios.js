@@ -29,10 +29,10 @@ const useAxios = () => {
         } = configObj;
         try {
 
-            const storedToken = localStorage.getItem("jwtToken");
-            // if (storedToken) {
-            //     axiosInstance.defaults.headers['Authorization'] = `Bearer ${storedToken}`;
-            // }
+            const storedToken = localStorage.getItem("token");
+            if (storedToken) {
+                axiosInstance.defaults.headers['Authorization'] = `Bearer ${storedToken}`;
+            }
             setLoading(true);
             const ctrl = new AbortController();
             setController(ctrl);

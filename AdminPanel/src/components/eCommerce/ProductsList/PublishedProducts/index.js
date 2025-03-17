@@ -5,7 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import Pagination from "./Pagination";
 import SearchForm from "../SearchForm";
-
+import { useState, useEffect } from 'react';
+import {test_url_images } from "../../../../config/environment"
 const allProductsData = [
   {
     id: "#JAN-999",
@@ -150,9 +151,26 @@ const allProductsData = [
 ];
 
 const AllProducts = ({data}) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [tableData, setTableData] = useState([]);
+  useEffect(() => {
+    if (data) {
+      setTableData(data.data || []);
+      setTotalPages(data.total_pages || 1);
+      setTotalItems(data.count || 0);
+      setCurrentPage(data.current_page || 1);
+    }
+  }, [data]);
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchData(newPage);
+    }
+  };
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-lg-4 mb-3">
+      {/* <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-lg-4 mb-3">
         <SearchForm />
 
         <Link
@@ -164,7 +182,7 @@ const AllProducts = ({data}) => {
             <span>Add New Product</span>
           </span>
         </Link>
-      </div>
+      </div> */}
 
       <div className="default-table-area all-products">
   <div className="table-responsive">
@@ -172,21 +190,29 @@ const AllProducts = ({data}) => {
       <thead>
         <tr>
           <th scope="col">ID</th>
+          <th scope="col">Cab Image</th>
           <th scope="col">Cab Number</th>
           <th scope="col">Cab Name</th>
           <th scope="col">Cab Type</th>
           <th scope="col">Price Per Km</th>
           <th scope="col">Availability</th>
           <th scope="col">Timestamp</th>
-          <th scope="col">Action</th>
+          {/* <th scope="col">Action</th> */}
         </tr>
       </thead>
 
       <tbody>
-        {data &&
-           data.filter(item => item.is_available === true).map((value, i) => (
+        {tableData &&
+           tableData.filter(item => item.is_available === true).map((value, i) => (
             <tr key={i}>
               <td>{value.id}</td>
+              <td>
+            <img
+              src={`${test_url_images}${value.photo}`}  // Assuming 'photo' contains the image URL
+            alt="Vehicle"
+            style={{ width: "80px", height: "50px", objectFit: "cover", borderRadius: "5px" }}
+          />
+        </td>
               <td>{value.cab_number}</td>
               <td>{value.cab_name}</td>
               <td>{value.cab_type}</td>
@@ -201,7 +227,7 @@ const AllProducts = ({data}) => {
                 </span>
               </td>
               <td>{new Date(value.timestamp).toLocaleString()}</td>
-              <td>
+              {/* <td>
                 <div className="d-flex align-items-center gap-1">
                   <button className="ps-0 border-0 bg-transparent lh-1 position-relative top-2">
                     <span className="material-symbols-outlined fs-16 text-primary">
@@ -221,15 +247,18 @@ const AllProducts = ({data}) => {
                     </span>
                   </button>
                 </div>
-              </td>
+              </td> */}
             </tr>
           ))}
       </tbody>
     </Table>
   </div>
-
-  {/* Pagination */}
-  <Pagination />
+  <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+      />
 </div>
     </>
   );

@@ -5,7 +5,7 @@ import { getBiddingData ,assignDriver} from '@/urls/urls';
 import { useEffect, useState } from "react";
 import ActionSheet from "@/components/ActionSheet/ActionSheet";
 import AlertMessage from "@/components/AlertMessage/AlertMessage";
-const AssignDriver = ({ isOpen, onClose, bookingId,actionResponse,actionSubmit }) => {
+const AssignDriver = ({ show,onHide, bookingId,actionError,actionResponse,actionSubmit }) => {
   const [alert, setAlert] = useState({ message: "", variant: "" });
 
     const [
@@ -21,14 +21,21 @@ const actionConfirm=()=>{
 }
 
 useEffect(()=>{
-if(actionResponse['error']){
+if(actionResponse && actionResponse['error']){
   setAlert({ message: actionResponse['error'], variant: "danger" });
   setIsModalOpen(false)
   setDriverId(null)
 
 }
 },[actionResponse])
-
+useEffect(()=>{
+  console.log(actionError['message'])
+  if(actionError && actionError['message']){
+    setAlert({ message: actionError['message'], variant: "danger" });
+    setIsModalOpen(false)
+    setDriverId(null)
+  }
+},[actionError])
 
     useEffect(()=>{
 if(bookingId){
@@ -37,7 +44,7 @@ biddingFetch(getBiddingData({booking_id:bookingId}))
 }
     },[bookingId])
     return (
-        <Modal show={isOpen} onHide={onClose} centered>
+        <Modal show={show} onHide={onHide} centered>
             <Modal.Header closeButton>
                 <Modal.Title>Bidding</Modal.Title>
             </Modal.Header>
@@ -133,6 +140,8 @@ setIsModalOpen(true)
                 onConfirm={actionConfirm}
                 title="Confirm Deletion"
                 message="Are you sure you want to delete this item?"
+                alert={alert}
+                loading={biddingLoading}
             />
         </Modal>
     );

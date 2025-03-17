@@ -4,16 +4,21 @@ import { Breadcrumb } from "react-bootstrap";
 import AddUser from "@/components/Users/AddUser";
 import { addDriverAdmin } from "@/urls/urls";
 import useAxios from "@/network/useAxios";
-import { useState } from "react";
+import { useState,useEffect } from "react";
+import AlertMessage from '@/components/AlertMessage/AlertMessage';
+import { useRouter } from "next/navigation";
 
 export default function Page() {
+  const route = useRouter()
+  const [alert, setAlert] = useState({ message: "", variant: "" });
     const [formData, setFormData] = useState({
       name: "",
       email: "",
       phone_number: "",
       password: "",
       aadhaar_number: "",
-      license_number: ""
+      license_number: "",
+      photo:null
     });
   
   const [
@@ -24,8 +29,22 @@ export default function Page() {
   ] = useAxios();
 
     const handleAdd = (formData) => {
+      console.log(formData)
       bookingFetch(addDriverAdmin(formData));
     };
+
+    useEffect(()=>{
+      if(bookingResponse['result']=='success'){
+        setAlert({message:'Driver Added Succesfully.',variant:'success'})
+        route.push("/drivers/")
+        
+      }
+      },[bookingResponse])
+            useEffect(()=>{
+      if(bookingError){
+        setAlert({message:bookingError.response.data.error,variant:'danger'})
+      }
+            },[bookingError])
   return (
     <>
       <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
@@ -44,8 +63,13 @@ export default function Page() {
           </Breadcrumb.Item>
         </Breadcrumb>
       </div> 
+      <AlertMessage
+        message={alert.message}
+        variant={alert.variant}
+        onClose={() => setAlert({ message: "", variant: "" })}
+      />
 
-      <AddUser formData={formData} setFormData={setFormData} handleAdd={handleAdd}/>
+      <AddUser formData={formData} setFormData={setFormData} handleAdd={handleAdd} bookingLoading={bookingLoading}/>
     </>
   );
 }

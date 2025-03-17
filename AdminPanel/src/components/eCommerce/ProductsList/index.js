@@ -43,7 +43,7 @@ if (actionResponse['result'] =='success'){
             className="border-0 gap-3 mb-lg-4 mb-3 products-list-tabs"
           >
             <Tab eventKey="allCabs" title="All Cabs">
-              <AllProducts data={data} setSelectId={setSelectId} setAlert={setAlert}/>
+              <AllProducts data={data}  setFetchNew={setFetchNew}/>
             </Tab>
 
             <Tab eventKey="bookedCabs" title="Booked Cabs">

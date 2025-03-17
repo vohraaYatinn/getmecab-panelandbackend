@@ -18,7 +18,7 @@ const Notifications = () => {
           <div className="d-flex justify-content-between align-items-center title">
             <span className="fw-semibold fs-15 text-secondary">
               Notifications{" "}
-              <span className="fw-normal text-body fs-14">(03)</span>
+              <span className="fw-normal text-body fs-14">(0)</span>
             </span>
             <button className="p-0 m-0 bg-transparent border-0 fs-14 text-primary">
               Clear All
@@ -26,7 +26,7 @@ const Notifications = () => {
           </div>
 
           <div className="max-h-217 scrollbar">
-            <div className="notification-menu">
+            {/* <div className="notification-menu">
               <a href="/notifications" className="dropdown-item">
                 <div className="d-flex align-items-center">
                   <div className="flex-shrink-0">
@@ -43,8 +43,8 @@ const Notifications = () => {
                   </div>
                 </div>
               </a>
-            </div>
-
+            </div> */}
+{/* 
             <div className="notification-menu unseen">
               <a href="/notifications" className="dropdown-item">
                 <div className="d-flex align-items-center">
@@ -59,12 +59,12 @@ const Notifications = () => {
                   </div>
                 </div>
               </a>
-            </div>
+            </div> */}
 
             <div className="notification-menu">
               <a href="/notifications" className="dropdown-item">
                 <div className="d-flex align-items-center">
-                  <div className="flex-shrink-0">
+                  {/* <div className="flex-shrink-0">
                     <i className="material-symbols-outlined text-success">
                       mark_email_unread
                     </i>
@@ -75,11 +75,11 @@ const Notifications = () => {
                       <span className="fw-semibold">withdrawal</span>
                     </p>
                     <span className="fs-13">1 day ago</span>
-                  </div>
+                  </div> */}
                 </div>
               </a>
             </div>
-
+{/* 
             <div className="notification-menu">
               <a href="/notifications" className="dropdown-item">
                 <div className="d-flex align-items-center">
@@ -97,7 +97,7 @@ const Notifications = () => {
                   </div>
                 </div>
               </a>
-            </div>
+            </div> */}
           </div>
 
           <a

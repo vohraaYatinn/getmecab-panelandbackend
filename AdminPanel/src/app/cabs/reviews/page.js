@@ -6,9 +6,11 @@ import { getAllReviews } from '@/urls/urls';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { Breadcrumb } from "react-bootstrap";
+import AlertMessage from "@/components/AlertMessage/AlertMessage";
 
 export default function Page() {
-  
+  const [alert, setAlert] = useState({ message: "", variant: "" });
+  const [fetchNew, setFetchNew] = useState(true)
   const [data, setData] = useState([])
   const [
     driversResponse,
@@ -17,14 +19,17 @@ export default function Page() {
     driversFetch,
   ] = useAxios();
   const fetchActivityByIdfunction = () => {
-    driversFetch(getAllReviews({}));
+    if(fetchNew){
+      driversFetch(getAllReviews({}));
+    }
   };
 useEffect(()=>{
   fetchActivityByIdfunction()
-},[])
+},[fetchNew])
 useEffect(()=>{
   if(driversResponse?.result == "success"){
-    setData(driversResponse?.data)
+    setData(driversResponse)
+    setFetchNew(false)
     console.log(driversResponse?.data)
   }
 },[driversResponse])
@@ -47,8 +52,14 @@ useEffect(()=>{
           </Breadcrumb.Item>
         </Breadcrumb>
       </div>
+      <AlertMessage
+        message={alert.message}
+        variant={alert.variant}
+        onClose={() => setAlert({ message: "", variant: "" })}
+      />
 
-      <Reviews data={data}/>
+
+      <Reviews data={data} setFetchNew={setFetchNew} setAlert={setAlert} alert={alert}/>
     </>
   );
 }

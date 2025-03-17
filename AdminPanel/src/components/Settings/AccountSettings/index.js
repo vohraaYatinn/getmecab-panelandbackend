@@ -2,14 +2,22 @@
 
 import { Row, Col, Form } from "react-bootstrap";
 import Image from "next/image";
+import useAxios from "@/network/useAxios";
+import { useEffect } from "react";
+import { getProfileData } from "@/urls/urls";
 
 const AccountSettings = () => {
+  const [profileData,profileError,profileLoading,profileFetch] = useAxios()
+  useEffect(()=>{
+    profileFetch(getProfileData())
+  },[])
+  
   return (
     <>
-      <div className="mb-4">
+      {/* <div className="mb-4">
         <h4 className="fs-20 mb-1">Profile</h4>
         <p className="fs-15">Update your photo and personal details here.</p>
-      </div>
+      </div> */}
 
       <Form>
         <Row>
@@ -20,26 +28,14 @@ const AccountSettings = () => {
                 <Form.Control
                   type="text"
                   className="text-dark ps-5 h-55"
-                  defaultValue="Admin"
+                  defaultValue={profileData?.data?.first_name?profileData?.data?.first_name:'N/A'}
                 />
                 <i className="ri-user-line position-absolute top-50 start-0 translate-middle-y fs-20 text-gray-light ps-20"></i>
               </Form.Group>
             </Form.Group>
           </Col>
 
-          <Col lg={6}>
-            <Form.Group className="mb-4">
-              <label className="label text-secondary">Last Name</label>
-              <Form.Group className="position-relative">
-                <Form.Control
-                  type="text"
-                  className="text-dark ps-5 h-55"
-                  defaultValue="John"
-                />
-                <i className="ri-user-line position-absolute top-50 start-0 translate-middle-y fs-20 text-gray-light ps-20"></i>
-              </Form.Group>
-            </Form.Group>
-          </Col>
+
 
       
 
@@ -50,7 +46,7 @@ const AccountSettings = () => {
                 <Form.Control
                   type="text"
                   className="text-dark ps-5 h-55"
-                  defaultValue="+1 444 555 6699"
+                  defaultValue={profileData?.data?.phone_number?profileData?.data?.phone_number:'N/A'}
                 />
                 <i className="ri-phone-line position-absolute top-50 start-0 translate-middle-y fs-20 text-gray-light ps-20"></i>
               </Form.Group>
@@ -59,125 +55,15 @@ const AccountSettings = () => {
 
           <Col lg={6}>
             <Form.Group className="mb-4">
-              <label className="label text-secondary">Address</label>
+              <label className="label text-secondary">Email</label>
               <Form.Group className="position-relative">
                 <Form.Control
                   type="text"
                   className="text-dark ps-5 h-55"
-                  defaultValue="E.g. 84 S. Arrowhead Court Branford"
+                  defaultValue={profileData?.data?.email?profileData?.data?.email:'N/A'}
                 />
-                <i className="ri-phone-line position-absolute top-50 start-0 translate-middle-y fs-20 text-gray-light ps-20"></i>
+                <i className="ri-mail-line position-absolute top-50 start-0 translate-middle-y fs-20 text-gray-light ps-20"></i>
               </Form.Group>
-            </Form.Group>
-          </Col>
-
-          <Col lg={6}>
-            <Form.Group className="mb-4">
-              <label className="label text-secondary">Country</label>
-              <Form.Group className="position-relative">
-                <Form.Select
-                  className="form-control ps-5 h-55"
-                  aria-label="Default select example"
-                >
-                  <option value="0" className="text-dark">
-                    Switzerland
-                  </option>
-                  <option value="1" className="text-dark">
-                    United States
-                  </option>
-                  <option value="2" className="text-dark">
-                    Canada
-                  </option>
-                  <option value="3" className="text-dark">
-                    France
-                  </option>
-                </Form.Select>
-                <i className="ri-map-2-line position-absolute top-50 start-0 translate-middle-y fs-20 text-gray-light ps-20"></i>
-              </Form.Group>
-            </Form.Group>
-          </Col>
-
-
-          <Col lg={6}>
-            <Form.Group className="mb-4">
-              <label className="label text-secondary">Your Skills</label>
-              <Form.Group className="position-relative">
-                <Form.Select
-                  className="form-control ps-5 h-55"
-                  aria-label="Default select example"
-                >
-                  <option value="0" className="text-dark">
-                    Project Management
-                  </option>
-                  <option value="1" className="text-dark">
-                    Leadership
-                  </option>
-                  <option value="2" className="text-dark">
-                    Data Analysis
-                  </option>
-                  <option value="3" className="text-dark">
-                    Teamwork
-                  </option>
-                  <option value="4" className="text-dark">
-                    Web Development
-                  </option>
-                </Form.Select>
-                <i className="ri-men-line position-absolute top-50 start-0 translate-middle-y fs-20 text-gray-light ps-20"></i>
-              </Form.Group>
-            </Form.Group>
-          </Col>
-
-    
-  
-
-          <Col lg={12}>
-            <Form.Group className="mb-4 p-4 bg-body d-sm-flex justify-content-between align-items-center rounded-3">
-              <div className="d-sm-flex align-items-center mb-3 mb-sm-0 me-lg-3">
-                <div className="me-md-5 pe-xxl-5 mb-3 mb-sm-0">
-                  <h4 className="body-font fs-15 fw-semibold text-body">
-                    Your photo
-                  </h4>
-                  <p>This will be displayed on your profile.</p>
-                </div>
-                <Image
-                  src="/images/user-70.png"
-                  className="rounded-4 wh-75 ms-3 ms-lg-0 rounded-circle"
-                  alt="user"
-                  width={75}
-                  height={75}
-                />
-              </div>
-
-              <div className="d-flex ms-sm-3 ms-md-0">
-                <button className="btn bg-danger bg-opacity-10 text-danger fw-semibold">
-                  Delete
-                </button>
-                <button className="btn bg-primary bg-opacity-10 text-primary fw-semibold ms-3">
-                  Update
-                </button>
-              </div>
-            </Form.Group>
-          </Col>
-
-          <Col lg={12}>
-            <Form.Group>
-              <label className="label text-secondary">
-                File Upload - Product Gallery
-              </label>
-              <div className="form-control h-100 text-center position-relative p-4 p-lg-5">
-                <div className="product-upload">
-                  <label htmlFor="file-upload" className="file-upload mb-0">
-                    <i className="ri-folder-image-line bg-primary bg-opacity-10 p-2 rounded-1 text-primary"></i>
-                    <span className="d-block text-body fs-14">
-                      Drag and drop an image or{" "}
-                      <span className="text-primary text-decoration-underline">
-                        Browse
-                      </span>
-                    </span>
-                  </label>
-                  <input id="file-upload" type="file" />
-                </div>
-              </div>
             </Form.Group>
           </Col>
         </Row>

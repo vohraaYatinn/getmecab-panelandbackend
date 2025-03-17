@@ -1,15 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, Form, Table, Button, Row, Col } from "react-bootstrap";
 import SearchForm from "./SearchForm";
 import Pagination from "./Pagination";
 import useAxios from "@/network/useAxios";
 import { addCouponAdmin } from "@/urls/urls";
+import ActionSheet from "@/components/ActionSheet/ActionSheet";
 
 
-const DealsTable = ({data, bookingFetch, deleteCoupon}) => {
-
+const DealsTable = ({data, bookingFetch, deleteCoupon, actionLoading, alert}) => {
+  const [isModalOpenAction, setIsModalOpenAction] = useState(false);
+  const [reviewId, setReviewId] = useState(null);
+  const actionConfirm = () =>{
+   deleteCoupon(reviewId)
+   setIsModalOpenAction(false)
+  }
   const [formData, setFormData] = useState({
     code: "",
     discount_percentage: "",
@@ -92,6 +98,24 @@ const DealsTable = ({data, bookingFetch, deleteCoupon}) => {
       );
     }
   };
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [tableData, setTableData] = useState([]);
+  useEffect(() => {
+    if (data) {
+      setTableData(data.data || []);
+      setTotalPages(data.total_pages || 1);
+      setTotalItems(data.count || 0);
+      setCurrentPage(data.current_page || 1);
+    }
+  }, [data]);
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchData(newPage);
+    }
+  };
+
 
 
   // Modal
@@ -105,7 +129,7 @@ const DealsTable = ({data, bookingFetch, deleteCoupon}) => {
       <Card className="bg-white border-0 rounded-3 mb-4">
         <Card.Body className="p-0">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 p-4">
-            <SearchForm />
+            {/* <SearchForm /> */}
 
             <div className="text-end">
               <button
@@ -125,7 +149,7 @@ const DealsTable = ({data, bookingFetch, deleteCoupon}) => {
         <Table className="align-middle">
           <thead>
             <tr>
-              <th scope="col">
+              {/* <th scope="col">
                 <Form>
                   <Form.Check
                     type="checkbox"
@@ -133,7 +157,7 @@ const DealsTable = ({data, bookingFetch, deleteCoupon}) => {
                     label="ID"
                   />
                 </Form>
-              </th>
+              </th> */}
               <th scope="col">Code</th>
               <th scope="col">Discount (%)</th>
               <th scope="col">Max Discount</th>
@@ -147,10 +171,10 @@ const DealsTable = ({data, bookingFetch, deleteCoupon}) => {
           </thead>
 
           <tbody>
-            {data &&
-              data.map((item, index) => (
+            {tableData &&
+              tableData.map((item, index) => (
                 <tr key={index}>
-                  <td>
+                  {/* <td>
                     <Form>
                       <Form.Check
                         type="checkbox"
@@ -158,7 +182,7 @@ const DealsTable = ({data, bookingFetch, deleteCoupon}) => {
                         label={item.id}
                       />
                     </Form>
-                  </td>
+                  </td> */}
                   <td>{item.code}</td>
                   <td>{item.discount_percentage}</td>
                   <td>{item.max_discount_amount}</td>
@@ -170,12 +194,18 @@ const DealsTable = ({data, bookingFetch, deleteCoupon}) => {
                   <td>
                     <div className="d-flex align-items-center gap-1">
                
-                      <button className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
-                      onClick={()=>{
-                        deleteCoupon(item.id)
-                      }}
+                    <button
+                        className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
+                        onClick={() => {
+                          setIsModalOpenAction(true);
+                          setReviewId(item.id)
+                          // setTitleMessage({
+                          //   title: 'Delete Cab',
+                          //   message: "Are you sure you want to delete this cab ?"
+                          // });
+                        }}
                       >
-                        <span className="material-symbols-outlined fs-16 text-danger">
+                        <span className="material-symbols-outlined fs-16 text-body">
                           delete
                         </span>
                       </button>
@@ -186,8 +216,12 @@ const DealsTable = ({data, bookingFetch, deleteCoupon}) => {
           </tbody>
         </Table>
 
-        {/* Pagination */}
-        <Pagination />
+        <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                onPageChange={handlePageChange}
+              />
       </div>
     </div>
         </Card.Body>
@@ -321,6 +355,15 @@ const DealsTable = ({data, bookingFetch, deleteCoupon}) => {
 
         <div className="close-outside" onClick={handleToggleShowModal}></div>
       </div>
+      <ActionSheet
+                isOpen={isModalOpenAction}
+                onClose={() => setIsModalOpenAction(false)}
+                onConfirm={actionConfirm}
+                title="Delete coupon"
+                message="Are you sure you want to delete coupon?"
+                alert={alert}
+                loading={actionLoading}
+            />
     </>
   );
 };

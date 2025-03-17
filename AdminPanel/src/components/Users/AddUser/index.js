@@ -3,7 +3,7 @@ import React, { useState } from "react";
 
 import { Row, Col, Card, Form } from "react-bootstrap";
 
-const AddUser = ({formData, setFormData, handleAdd}) => {
+const AddUser = ({formData, setFormData, handleAdd, bookingLoading}) => {
 
 
   const [errors, setErrors] = useState({});
@@ -25,6 +25,17 @@ const AddUser = ({formData, setFormData, handleAdd}) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+  
+    if (file) {
+      console.log("Selected File:", file);
+      setFormData((prevData) => ({
+        ...prevData,
+        photo: file,
+      }));
+    }
   };
   
 
@@ -129,7 +140,7 @@ const AddUser = ({formData, setFormData, handleAdd}) => {
 
               <Col sm={6} lg={6}>
                 <Form.Group className="mb-4">
-                  <label className="label text-secondary">aadhaar Card</label>
+                  <label className="label text-secondary">Aadhar Card</label>
                   <Form.Control
                     type="text"
                     name="aadhaar_number"
@@ -154,7 +165,7 @@ const AddUser = ({formData, setFormData, handleAdd}) => {
                     value={formData.license_number}
                     onChange={handleChange}
                     className="h-55"
-                    placeholder="Enter license doc"
+                    placeholder="Enter License Number"
                     isInvalid={!!errors.license_number}
                   />
                   <Form.Control.Feedback type="invalid">
@@ -163,12 +174,30 @@ const AddUser = ({formData, setFormData, handleAdd}) => {
                 </Form.Group>
               </Col>
 
+              <Col sm={6} lg={6}>
+        <Form.Group className="mb-4">
+          <label className="label text-secondary">Photo</label>
+          <Form.Control
+            type="file"
+            name="photo"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="h-55"
+            isInvalid={!!errors.photo}
+          />
+          <Form.Control.Feedback type="invalid">
+            {errors.photo}
+          </Form.Control.Feedback>
+        </Form.Group>
+      </Col>
+
               <Col sm={12} lg={12}>
                 <div className="d-flex flex-wrap gap-3">
                   <button
                     type="button"
                     className="btn btn-danger py-2 px-4 fw-medium fs-16 text-white"
                     onClick={() => setFormData({ name: "", email: "", phone_number: "", password: "" })}
+                    disabled={bookingLoading}
                   >
                     Cancel
                   </button>
@@ -179,6 +208,7 @@ const AddUser = ({formData, setFormData, handleAdd}) => {
                       e.preventDefault()
                       handleSubmit()
                     }}
+                    disabled={bookingLoading}
                   >
                     Add Driver
                   </button>

@@ -3,12 +3,15 @@
 import { HttpAxiosService } from './httpService';
 import { Urls } from './constantsUrls.jsx';
 import { test_url } from "../../src/config/environment.js"
-import { BOOKING_URLS } from './constantsUrls';
-import axios from 'axios';
 
 const project = new HttpAxiosService(test_url);
 
-//booking management
+export const login = (payload_data) => {
+  return project.post(Urls.LOGIN , payload_data);
+};
+export const changePassword = (payload_data) => {
+  return project.post(Urls.CHANGE_PASSWORD , payload_data);
+};
 export const getBookingsAdmin = (payload_data) => {
   return project.get(Urls.GET_BOOKINGS , payload_data);
 };
@@ -31,7 +34,7 @@ export const getAllCoupons = (payload_data) => {
   return project.get(Urls.GET_ALL_COUPONS , payload_data);
 };
 export const addDriverAdmin = (payload_data) => {
-  return project.post(Urls.ADD_DRIVERS , payload_data);
+  return project.multiPartFormData(Urls.ADD_DRIVERS , payload_data);
 };
 export const driverUpdateSubmitService = (payload_data) => {
   return project.post(Urls.DRIVER_UPDATE_SUBMIT , payload_data);
@@ -46,7 +49,7 @@ export const addCouponAdmin = (payload_data) => {
   return project.post(Urls.ADD_COUPON , payload_data);
 };
 export const addCabAdmin = (payload_data) => {
-  return project.post(Urls.ADD_CAB , payload_data);
+  return project.multiPartFormData(Urls.ADD_CAB , payload_data);
 };
 export const deleteBooking = (payload_data) => {
   return project.post(Urls.DELETE_BOOKING , payload_data);
@@ -64,32 +67,15 @@ export const deleteDriver = (payload_data) => {
 export const deleteCab = (payload_data) => {
   return project.post(Urls.DELETE_CAB , payload_data);
 };
-
-export const bookingService = (payload_data) => {
-  return project.post(Urls.BOOKING_SERVICE , payload_data);
+export const deleteReview = (payload_data) => {
+  return project.post(Urls.DELETE_REVIEW , payload_data);
 };
-
-export const cityAutocomplete = (payload_data) => {
-  return project.get(Urls.CITY_AUTOCOMPLETE, payload_data);
+export const getDashboardData = (payload_data) => {
+  return project.get(Urls.DASHBOARD_DATA , payload_data);
 };
-
-export const getVendorRequests = (payload_data) => {
-  return project.get(Urls.VENDOR_REQUESTS, payload_data);
+export const getProfileData = (payload_data) => {
+  return project.get(Urls.PROFILE_DATA , payload_data);
 };
-
-export const vendorRequestAction = (payload_data) => {
-  return project.post(Urls.VENDOR_REQUESTS_ACTION, payload_data);
-};
-
-export const getVendors = (payload_data) => {
-  return project.get(Urls.VENDORS, payload_data);
-};
-
-export const createVendor = (payload_data) => {
-  return project.post(Urls.CREATE_VENDOR, payload_data);
-};
-
-
 
 
 

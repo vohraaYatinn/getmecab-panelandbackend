@@ -3,13 +3,56 @@
 import Image from "next/image";
 import { Card, Table, Form } from "react-bootstrap";
 import Link from "next/link";
+import Pagination from "./Pagination";
+import React, { useState, useEffect } from "react";
+import useAxios from "@/network/useAxios";
+import { deleteReview } from "@/urls/urls";
+import ActionSheet from "@/components/ActionSheet/ActionSheet";
 
-const Reviews = ({data}) => {
+const Reviews = ({data,setFetchNew,setAlert,alert}) => {
+  const [isModalOpenAction, setIsModalOpenAction] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [tableData, setTableData] = useState([]);
+  useEffect(() => {
+    if (data) {
+      setTableData(data.data || []);
+      setTotalPages(data.total_pages || 1);
+      setTotalItems(data.count || 0);
+      setCurrentPage(data.current_page || 1);
+    }
+  }, [data]);
+  const [cabDeleteRespnse,cabDeleteError,cabDeleteLoading,cabDeleteSubmit] = useAxios();
+  const [Select_driver_id,setSelect_driver_id] = useState(null)
+  const actionConfirm = () =>{
+    cabDeleteSubmit(    deleteReview({id:Select_driver_id}))
+  }
+  useEffect(()=>{
+    if(cabDeleteRespnse['result'] == 'success'){
+      setAlert({ message: cabDeleteRespnse['result'], variant: "success" });
+      setIsModalOpenAction(false);
+      setSelect_driver_id(null)
+      setFetchNew(true)
+    }
+  },[cabDeleteRespnse])
+  useEffect(()=>{
+    if(cabDeleteError && cabDeleteError['message']){
+      setAlert({ message: cabDeleteError['message'], variant: "danger" });
+      setIsModalOpenAction(false);
+    }
+  },[cabDeleteError])
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchData(newPage);
+    }
+  };
+
   return (
     <>
       <Card className="bg-white border-0 rounded-3 mb-4">
         <Card.Body className="p-4">
-          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 mb-md-4">
+          {/* <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 mb-md-4">
             <Form className="position-relative table-src-form me-0">
               <Form.Control type="text" placeholder="Search here" />
 
@@ -27,7 +70,7 @@ const Reviews = ({data}) => {
               <option defaultValue="2">Monthly</option>
               <option defaultValue="3">Yearly</option>
             </Form.Select>
-          </div>
+          </div> */}
 
           <div className="default-table-area manage-reviews-table">
       <div className="table-responsive">
@@ -43,7 +86,7 @@ const Reviews = ({data}) => {
             </tr>
           </thead>
           <tbody>
-            {data && data.map((item) => (
+            {tableData && tableData.map((item) => (
               <tr key={item.id}>
                 <td>
                   <div className="d-flex align-items-center">
@@ -88,17 +131,33 @@ const Reviews = ({data}) => {
                 <td>
                   <div className="d-flex align-items-center gap-3">
                  
-                    <button className="ps-0 border-0 bg-transparent lh-1">
-                      <span className="material-symbols-outlined text-danger fs-16">
-                        delete
-                      </span>
-                    </button>
+                  <button
+                        className="ps-0 border-0 bg-transparent lh-1 position-relative top-2"
+                        onClick={() => {
+                          setIsModalOpenAction(true);
+                          setSelect_driver_id(item.id)
+                          // setTitleMessage({
+                          //   title: 'Delete Cab',
+                          //   message: "Are you sure you want to delete this cab ?"
+                          // });
+                        }}
+                      >
+                        <span className="material-symbols-outlined fs-16 text-body">
+                          delete
+                        </span>
+                      </button>
                   </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                onPageChange={handlePageChange}
+              />
       </div>
     </div>
 
@@ -106,6 +165,15 @@ const Reviews = ({data}) => {
 
         </Card.Body>
       </Card>
+      <ActionSheet
+                isOpen={isModalOpenAction}
+                onClose={() => setIsModalOpenAction(false)}
+                onConfirm={actionConfirm}
+                title="Delete Review"
+                message="Are you sure you want to delete Review?"
+                alert={alert}
+                loading={cabDeleteLoading}
+            />
     </>
   );
 };

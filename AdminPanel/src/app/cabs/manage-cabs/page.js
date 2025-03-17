@@ -27,7 +27,7 @@ useEffect(()=>{
 },[fetchNew])
 useEffect(()=>{
   if(driversResponse?.result == "success"){
-    setData(driversResponse?.data)
+    setData(driversResponse)
     console.log(driversResponse?.data)
     setFetchNew(false)
   }
@@ -35,7 +35,7 @@ useEffect(()=>{
   return (
     <>
       <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-        <h3 className="mb-0">Products List</h3>
+        <h3 className="mb-0">Manage Cabs</h3>
  
         <Breadcrumb className="breadcrumb-page-list align-items-center mb-0 lh-1">
           <Breadcrumb.Item href="/dashboard/ecommerce/">

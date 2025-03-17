@@ -7,7 +7,7 @@ import useAxios from "@/network/useAxios";
 import ActionSheet from "@/components/ActionSheet/ActionSheet";
 import { useState } from 'react';
 
-export default function EditCab({ show, handleClose, formData, setFormData ,setAlert}) {
+export default function EditCab({ show, handleClose, formData, setFormData ,setAlert,alert}) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,7 +27,8 @@ export default function EditCab({ show, handleClose, formData, setFormData ,setA
   const actionConfirm = () =>{
     cabSubmit(cabUpdateSubmit(formData))
   }
-  const handleSubmitModal = ()=>{
+  const handleSubmitModal= async (e) => {
+    e.preventDefault();
     setIsModalOpen(true)
   }
   useEffect(()=>{
@@ -111,6 +112,8 @@ handleClose()
                 onConfirm={actionConfirm}
                 title="Edit Cab"
                 message="Are you sure you want to edit cab detail?"
+                alert={alert}
+                loading={cabLoading}
             />
     </Modal>
   );

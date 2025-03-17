@@ -6,16 +6,31 @@ import Link from "next/link";
 import Image from "next/image";
 import EditUserModal from "./EditUser";
 import ActionSheet from "@/components/ActionSheet/ActionSheet";
+import {test_url_images } from "../../../config/environment"
 
-const TeamMembers = ({data,setSelectId,actionResponse,actionLoading,actionSubmit}) => {
-
+const TeamMembers = ({data,setSelectId,actionResponse,actionLoading,actionSubmit,actionError}) => {
+  const [alert, setAlert] = useState({ message: "", variant: "" });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [driverId,setDriverId] = useState(null)
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [showModal, setShowModal] = useState(false);
 const actionConfirm = () =>{
+  console.log(driverId)
   setSelectId(driverId)
+
 }
+useEffect(()=>{
+  console.log(actionError,actionError['message'])
+  if(actionError && actionError['message']){
+    setAlert({ message: actionError['message'], variant: "danger" });
+    
+  setSelectId(null)
+  }
+},[actionError])
+useEffect(()=>{
+  if(actionResponse && actionResponse['result'] == "success"){
+setIsModalOpen(false)}
+},[actionResponse])
   
   const handleEditClick = (user) => {
     if (!user) return;  // Prevent errors if user is undefined
@@ -42,7 +57,7 @@ const actionConfirm = () =>{
       <Card className="bg-white border-0 rounded-3 mb-4">
         <Card.Body className="p-4">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <Form className="position-relative table-src-form me-0">
+            {/* <Form className="position-relative table-src-form me-0">
               <input
                 type="text"
                 className="form-control"
@@ -51,7 +66,7 @@ const actionConfirm = () =>{
               <span className="material-symbols-outlined position-absolute top-50 start-0 translate-middle-y">
                 search
               </span>
-            </Form>
+            </Form> */}
 
             <Link
               href="/drivers/add-user/"
@@ -75,7 +90,7 @@ const actionConfirm = () =>{
                 <div className="d-flex align-items-center">
                   <div className="flex-shrink-0">
                     <Image
-                      src="/images/user-60.jpg"
+                      src={driver?.photo?(`${test_url_images}${driver?.photo}`):('')}
                       className="wh-65 rounded-circle"
                       alt="user"
                       width={65}
@@ -100,7 +115,7 @@ const actionConfirm = () =>{
               </button>
                 <button className="ps-0 border-0 bg-transparent lh-1 position-relative top-2" 
               onClick={()=>{
-                
+                setDriverId(driver.id)
                 setIsModalOpen(true)
                 
               }}
@@ -151,7 +166,9 @@ const actionConfirm = () =>{
                 onClose={() => setIsModalOpen(false)}
                 onConfirm={actionConfirm}
                 title="Confirm Deletion"
-                message="Are you sure you want to delete this item?"
+                message="Are you sure you want to delete this driver?"
+                alert={alert}
+                loading={actionLoading}
             />
     </>
   );

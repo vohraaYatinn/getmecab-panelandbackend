@@ -1,13 +1,15 @@
 /* eslint-disable */
 export class Urls {
     static API_PREFIX = '';
-
+    static LOGIN = Urls.API_PREFIX + 'login/';
+    static CHANGE_PASSWORD= Urls.API_PREFIX + 'change-password/'
     //booking manage
     static GET_BOOKINGS = Urls.API_PREFIX + 'fetch-all-booking/';
     static GET_BOOKINGS_ANALYTICS = Urls.API_PREFIX + 'fetch-all-booking-analytics/';
     static DELETE_BOOKING = Urls.API_PREFIX + 'delete-booking/';
     static CHANGE_BOOKING_STATUE = Urls.API_PREFIX + 'change-booking-status/';
-    static CITY_AUTOCOMPLETE = Urls.API_PREFIX + 'city-autocomplete';
+    static DASHBOARD_DATA = Urls.API_PREFIX + 'admin-dashboard-data/';
+    static PROFILE_DATA = Urls.API_PREFIX + 'admin-profile-data/';
 
     //drivers
     static GET_DRIVERS = Urls.API_PREFIX + 'fetch-all-drivers/';
@@ -20,8 +22,8 @@ export class Urls {
     static ADD_CAB = Urls.API_PREFIX + 'add-cab/';
     static CAB_UPDATE_SUBMIT = Urls.API_PREFIX + 'cab-update-submit/';
     static DELETE_CAB = Urls.API_PREFIX + 'delete-cab/';
+    static DELETE_REVIEW = Urls.API_PREFIX + 'delete-review/';
     static GET_BIDDING_DATA = Urls.API_PREFIX + 'view-bids/';
-    static BOOKING_SERVICE = Urls.API_PREFIX + 'create-booking/';
 
     //get all reviews
     static GET_ALL_REVIEWS = Urls.API_PREFIX + 'fetch-all-reviews/';
@@ -31,19 +33,5 @@ export class Urls {
     static ADD_COUPON = Urls.API_PREFIX + 'add-coupon/';
     static DELETE_COUPON = Urls.API_PREFIX + 'delete-coupon/';
 
-    //booking creation
-    static CREATE_BOOKING = Urls.API_PREFIX + 'bookings/create/';
 
-    // Vendor management
-    static VENDOR_REQUESTS = Urls.API_PREFIX + 'vendor-requests/';
-    static VENDOR_REQUESTS_ACTION = Urls.API_PREFIX + 'vendor-requests/action/';
-    static VENDORS = Urls.API_PREFIX + 'vendors/';
-    static CREATE_VENDOR = Urls.API_PREFIX + 'vendors/create/';
 }
-
-export const BOOKING_URLS = {
-    CREATE_BOOKING: Urls.API_PREFIX + 'bookings/create/',
-    FETCH_ALL_BOOKINGS: Urls.API_PREFIX + 'fetch-all-booking/',
-    DELETE_BOOKING: Urls.API_PREFIX + 'delete-booking/',
-    CHANGE_BOOKING_STATUS: Urls.API_PREFIX + 'change-booking-status/',
-};
