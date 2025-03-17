@@ -67,7 +67,7 @@ class Cab(models.Model):
 
 
 class VendorRequest(models.Model):
-    vendor_name = models.CharField(max_length=100)
+    vendor_name = models.CharField(max_length=100,default=None)
     phone_number = models.CharField(max_length=15, unique=True)
     email = models.EmailField(unique=True)
     company_name = models.CharField(max_length=100)
@@ -96,6 +96,9 @@ class Vendor(models.Model):
         return f"{self.vendor_id} - {self.vendor_request.vendor_name}"
 
 class Booking(models.Model):
+    BOOKED='BOOKED'
+    BUYED='BUYED'
+    TRIP_TYPE_CHOICES = [(BOOKED,'BOOKED'),(BUYED,'BUYED')]
     customer_name = models.CharField(max_length=100)
     customer_number = models.CharField(max_length=15)
     customer_email = models.EmailField(max_length=100, blank=True, null=True)

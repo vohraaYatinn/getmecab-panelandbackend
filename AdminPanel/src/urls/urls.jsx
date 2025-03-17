@@ -76,6 +76,25 @@ export const getDashboardData = (payload_data) => {
 export const getProfileData = (payload_data) => {
   return project.get(Urls.PROFILE_DATA , payload_data);
 };
+export const getVendors = (payload_data) => {
+  return project.get(Urls.VENDORS, payload_data);
+};
 
+export const createVendor = (payload_data) => {
+  return project.post(Urls.CREATE_VENDOR, payload_data);
+};
+export const getVendorRequests = (payload_data) => {
+  return project.get(Urls.VENDOR_REQUESTS, payload_data);
+};
+
+export const vendorRequestAction = (payload_data) => {
+  return project.post(Urls.VENDOR_REQUESTS_ACTION, payload_data);
+}
+export const cityAutocomplete = (payload_data) => {
+  return project.get(Urls.CITY_AUTOCOMPLETE, payload_data);
+}
+export const bookingService = (payload_data) => {
+  return project.post(Urls.BOOKING_SERVICE , payload_data);
+}
 
 

@@ -33,5 +33,17 @@ export class Urls {
     static ADD_COUPON = Urls.API_PREFIX + 'add-coupon/';
     static DELETE_COUPON = Urls.API_PREFIX + 'delete-coupon/';
 
+    //vendor
+    static CREATE_BOOKING = Urls.API_PREFIX + 'bookings/create/';
+
+    // Vendor management
+    static VENDOR_REQUESTS = Urls.API_PREFIX + 'vendor-requests/';
+    static VENDOR_REQUESTS_ACTION = Urls.API_PREFIX + 'vendor-requests/action/';
+    static VENDORS = Urls.API_PREFIX + 'vendors/';
+    static CREATE_VENDOR = Urls.API_PREFIX + 'vendors/create/';
+    static BOOKING_SERVICE = Urls.API_PREFIX + 'create-booking/';
+    static CITY_AUTOCOMPLETE = Urls.API_PREFIX + 'city-autocomplete';
+
+
 
 }

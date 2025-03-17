@@ -155,6 +155,8 @@ const VendorList = () => {
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleSubmit}
         title="Create New Vendor"
+        alert={alert}
+        loading={createLoading}
       >
         <Form>
           <Form.Group className="mb-3">

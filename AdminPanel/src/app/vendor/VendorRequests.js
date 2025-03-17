@@ -151,6 +151,8 @@ const VendorRequests = () => {
         onConfirm={handleConfirm}
         title={`${action === 'approve' ? 'Approve' : 'Reject'} Vendor Request`}
         message={`Are you sure you want to ${action} this vendor request?`}
+        alert={alert}
+        loading={actionLoading}
       />
 
       <AlertMessage
