@@ -86,8 +86,8 @@ class LoginView(APIView):
 
     def post(self, request):
         try:
-            email = request.data.get("email")
-            user = User.objects.filter(email=email).first()
+            phone_number = request.data.get("phone_number")
+            user = User.objects.filter(phone_number=phone_number).first()
             if user and user.check_password(request.data.get("password")):
                 refresh = RefreshToken.for_user(user)
                 return Response(data={"access": str(refresh.access_token), "refresh": str(refresh)},status=200)

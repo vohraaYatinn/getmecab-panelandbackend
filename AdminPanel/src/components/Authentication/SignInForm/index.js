@@ -11,7 +11,7 @@ import AlertMessage from '@/components/AlertMessage/AlertMessage';
 
 const SignInForm = () => {
   const route = useRouter()
-  const [email, setEmail] = useState("");
+  const [phone_number, setphone_number] = useState("");
   const [password, setPassword] = useState("");
   const [alert, setAlert] = useState({ message: "", variant: "" });
   const [loginResponce,
@@ -21,8 +21,15 @@ const SignInForm = () => {
   ] = useAxios()
   const loginFun= async (e) => {
     e.preventDefault();
-    loginSubmit(login({ email:email,password:password}))
+    if(phone_number.length==10){
+   
+    loginSubmit(login({ phone_number:phone_number,password:password}))
   }
+
+else{
+  setAlert({message:'Invalid Phone Number',variant:'danger'})
+}
+}
 
   useEffect(()=>{
     console.log(loginResponce)
@@ -88,13 +95,13 @@ setAlert({message:'Invalid credentials',variant:'danger'})
       />
               <Form onSubmit={loginFun}>
   <Form.Group className="mb-4">
-    <label className="label text-secondary">Email Address</label>
+    <label className="label text-secondary">Phone Number</label>
     <Form.Control
-      type="email"
+      type="phone"
       className="h-55"
-      placeholder="example@trezo.com"
-      value={email}
-      onChange={(e) => setEmail(e.target.value)}
+      placeholder="Enter your number"
+      value={phone_number}
+      onChange={(e) => setphone_number(e.target.value)}
     />
   </Form.Group>
 
@@ -113,6 +120,7 @@ setAlert({message:'Invalid credentials',variant:'danger'})
     <button  
       type="submit"  // ADD THIS TO PREVENT RELOAD
       className="btn btn-primary fw-medium py-2 px-3 w-100"
+      disabled={!phone_number || !password}
     >
       <div className="d-flex align-items-center justify-content-center py-1">
         <span className="material-symbols-outlined fs-20 text-white me-2">login</span>
