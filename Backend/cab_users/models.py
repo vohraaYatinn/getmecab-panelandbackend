@@ -10,12 +10,13 @@ class User(AbstractUser):
     CUSTOMER = "customer"
     DRIVER = "driver"
     ADMIN = "admin"
+    VENDOR='vendor'
 
-    ROLE_CHOICES = [('admin', 'Admin'), ('driver', 'Driver'), ('customer', 'Customer')]
+    ROLE_CHOICES = [('admin', 'Admin'), ('driver', 'Driver'), ('customer', 'Customer'),('vendor','Vendor')]
 
     email = models.EmailField(null=True)
     phone_number = models.CharField(max_length=10, unique=True,null=False)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=CUSTOMER)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=VENDOR)
 
     USERNAME_FIELD = "phone_number"
     REQUIRED_FIELDS = ["username"]
@@ -68,32 +69,26 @@ class Cab(models.Model):
 
 class VendorRequest(models.Model):
     vendor_name = models.CharField(max_length=100,default=None)
-    phone_number = models.CharField(max_length=15, unique=True)
-    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=15, )
+    email = models.EmailField()
     company_name = models.CharField(max_length=100)
-    pan_number = models.CharField(max_length=10, unique=True)
-    gst_number = models.CharField(max_length=15, unique=True)
+    pan_number = models.CharField(max_length=10,)
+    gst_number = models.CharField(max_length=15, )
     status = models.CharField(max_length=20, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    modified_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.vendor_name} - {self.company_name}"
 
 class Vendor(models.Model):
-    vendor_id = models.CharField(max_length=20, unique=True)
-    vendor_name = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=15, unique=True)
-    email = models.EmailField(unique=True)
     company_name = models.CharField(max_length=100)
-    pan_number = models.CharField(max_length=10, unique=True)
-    gst_number = models.CharField(max_length=15, unique=True)
+    pan_number = models.CharField(max_length=10)
+    gst_number = models.CharField(max_length=15)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    modified_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"{self.vendor_id} - {self.vendor_request.vendor_name}"
 
 class Booking(models.Model):
     BOOKED='BOOKED'

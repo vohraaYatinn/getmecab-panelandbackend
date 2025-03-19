@@ -115,7 +115,7 @@ class VendorRequestSerializer(serializers.ModelSerializer):
         read_only_fields = ('status', 'created_at', 'updated_at')
 
 class VendorSerializer(serializers.ModelSerializer):
-    vendor_request = VendorRequestSerializer(read_only=True)
+    user = UserSerializer()
     
     class Meta:
         model = Vendor

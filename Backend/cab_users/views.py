@@ -1307,8 +1307,7 @@ class CreateVendorView(APIView):
 
 
 class VendorListView(APIView):
-    permission_classes = [AllowAny]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -1318,11 +1317,9 @@ class VendorListView(APIView):
             vendors = Vendor.objects.all().order_by('-created_at')
             total = vendors.count()
 
-            # Calculate pagination
             start = (page - 1) * page_size
             end = start + page_size
             vendors = vendors[start:end]
-
             serializer = VendorSerializer(vendors, many=True)
             return Response({
                 "result": "success",
@@ -1332,7 +1329,34 @@ class VendorListView(APIView):
             }, status=200)
         except Exception as e:
             return Response({
-                "result": "error",
+                "result": "failure",
+                "message": str(e)
+            }, status=500)
+
+class PendingVendorListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            page = int(request.GET.get('page', 1))
+            page_size = int(request.GET.get('page_size', 10))
+
+            pending_vendors = VendorRequest.objects.all().order_by('-created_at')
+            total = pending_vendors.count()
+
+            start = (page - 1) * page_size
+            end = start + page_size
+            pending_vendors = pending_vendors[start:end]
+            serializer = VendorRequestSerializer(pending_vendors, many=True)
+            return Response({
+                "result": "success",
+                "data": serializer.data,
+                "total": total
+
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "result": "failure",
                 "message": str(e)
             }, status=500)
 
@@ -1353,21 +1377,22 @@ class VendorRequestActionView(APIView):
             vendor_request = VendorRequest.objects.get(id=request_id)
 
             if action == 'approve':
-                # Generate vendor ID
+
                 vendor_id = f"VENDOR{str(vendor_request.id).zfill(6)}"
 
-                # Create user
+
                 user = User.objects.create_user(
-                    username=vendor_request.email,
+                    username=vendor_id,
                     email=vendor_request.email,
                     password=request.data.get('password', 'default_password123')
                 )
 
-                # Create vendor
+
                 Vendor.objects.create(
-                    vendor_id=vendor_id,
-                    vendor_request=vendor_request,
-                    user=user
+                    user=user,
+                    company_name=vendor_request.company_name,
+                    pan_number=vendor_request.pan_number,
+                    gst_number=vendor_request.gst_number
                 )
 
                 vendor_request.status = 'approved'
@@ -1415,22 +1440,37 @@ class VendorRequestView(APIView):
     def post(self, request):
 
         try:
+            email=request.data.get('email',None)
+            phone_number=request.data.get('phone_number',None)
+
+
+            if User.objects.filter(email=email):
+                raise Exception('Email already linked to another vendor')
+            if User.objects.filter(phone_number=phone_number):
+                raise Exception('Phone Number already linked to another vendor')
+            if VendorRequest.objects.filter(email=email , status='pending'):
+                raise Exception('Already active vendor request with this email')
+            if VendorRequest.objects.filter(phone_number=phone_number ,status='pending'):
+                raise Exception('Already active vendor request with this number')
+
+
             serializer = VendorRequestSerializer(data=request.data)
+
             if serializer.is_valid():
                 serializer.save()
                 return Response({
                     "result": "success",
                     "message": "Vendor request submitted successfully",
-                    "data": serializer.data
+
                 }, status=201)
             return Response({
-                "result": "error",
+                "result": "failure",
                 "message": "Invalid data",
-                "errors": serializer.errors
+
             }, status=400)
         except Exception as e:
             return Response({
-                "result": "error",
+                "result": "failure",
                 "message": str(e)
             }, status=500)
 

@@ -83,8 +83,16 @@ export const getVendors = (payload_data) => {
 export const createVendor = (payload_data) => {
   return project.post(Urls.CREATE_VENDOR, payload_data);
 };
+
+export const createVendorRequest = (payload_data) => {
+  return project.post(Urls.CREATE_VENDOR_REQUEST, payload_data);
+};
+
 export const getVendorRequests = (payload_data) => {
   return project.get(Urls.VENDOR_REQUESTS, payload_data);
+};
+export const getPendingVendorRequests = (payload_data) => {
+  return project.get(Urls.PENDING_VENDOR_REQUESTS, payload_data);
 };
 
 export const vendorRequestAction = (payload_data) => {

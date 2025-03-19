@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { Table, Button } from "react-bootstrap";
 import useAxios from '@/network/useAxios';
-import { getVendorRequests, vendorRequestAction } from '@/urls/urls';
+import { getPendingVendorRequests,getVendorRequests, vendorRequestAction } from '@/urls/urls';
 import ActionSheet from "@/components/ActionSheet/ActionSheet";
 import AlertMessage from "@/components/AlertMessage/AlertMessage";
 import Pagination from "@/components/Apps/Contacts/Pagination";
 
-const VendorRequests = () => {
+const VendorRequests = (activeTab) => {
   const [requests, setRequests] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -54,10 +54,12 @@ const VendorRequests = () => {
   }, [actionResponse]);
 
   const fetchRequests = () => {
-    requestsSubmit(getVendorRequests({
-      page: currentPage,
-      page_size: itemsPerPage
-    }));
+    if(activeTab?.activeTab === 'requests'){
+      requestsSubmit(getPendingVendorRequests({
+        page: currentPage,
+        page_size: itemsPerPage
+      }));
+    }
   };
 
   const handlePageChange = (page) => {
@@ -65,6 +67,7 @@ const VendorRequests = () => {
   };
 
   const handleAction = (request, actionType) => {
+    setAlert({ message: "", variant: "" });
     setSelectedRequest(request);
     setAction(actionType);
     setIsModalOpen(true);

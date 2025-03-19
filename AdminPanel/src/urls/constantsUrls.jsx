@@ -38,11 +38,13 @@ export class Urls {
 
     // Vendor management
     static VENDOR_REQUESTS = Urls.API_PREFIX + 'vendor-requests/';
-    static VENDOR_REQUESTS_ACTION = Urls.API_PREFIX + 'vendor-requests/action/';
-    static VENDORS = Urls.API_PREFIX + 'vendors/';
-    static CREATE_VENDOR = Urls.API_PREFIX + 'vendors/create/';
+    static PENDING_VENDOR_REQUESTS = Urls.API_PREFIX + 'get-pending-vendors/';
+    static VENDOR_REQUESTS_ACTION = Urls.API_PREFIX + 'vendor-requests-action/';
+    static VENDORS = Urls.API_PREFIX + 'get-vendors/';
+    static CREATE_VENDOR = Urls.API_PREFIX + 'create-vendors/';
+    static CREATE_VENDOR_REQUEST = Urls.API_PREFIX + 'create-vendor-requests/';
     static BOOKING_SERVICE = Urls.API_PREFIX + 'create-booking/';
-    static CITY_AUTOCOMPLETE = Urls.API_PREFIX + 'city-autocomplete';
+    static CITY_AUTOCOMPLETE = Urls.API_PREFIX + 'city-autocomplete/';
 
 
 
