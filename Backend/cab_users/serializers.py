@@ -49,6 +49,8 @@ class DriverSerializer(serializers.ModelSerializer):
         model = Driver
         fields = "__all__"
 
+    vendor = serializers.PrimaryKeyRelatedField(queryset=Vendor.objects.all())
+
 
 class DriverAdminSerializer(serializers.ModelSerializer):
     user = UserSerializer()
@@ -95,6 +97,12 @@ class CouponSerializer(serializers.ModelSerializer):
 class BookingAdminSerializer(serializers.ModelSerializer):
     # driver = DriverSerializer()
     # user = UserSerializer()
+    class Meta:
+        model = Booking
+        fields = "__all__"
+class BookingDriverSerializer(serializers.ModelSerializer):
+    driver = DriverSerializer()
+    user = UserSerializer()
     class Meta:
         model = Booking
         fields = "__all__"

@@ -16,7 +16,8 @@ from googlemaps import Client as GoogleMaps
 from .models import Cab, Booking, Driver, Bidding, Payment, DriverRating, Coupon, CouponUsage, Vendor, VendorRequest
 from .serializers import UserSerializer, SignupSerializer, CabSerializer, BookingSerializer, BiddingSerializer, \
     DriverSerializer, PaymentSerializer, CouponSerializer, OnlyBookingSerializer, BookingAdminSerializer, \
-    DriverAdminSerializer, DriverRatingAdminSerializer, VendorRequestSerializer, VendorSerializer
+    DriverAdminSerializer, DriverRatingAdminSerializer, VendorRequestSerializer, VendorSerializer, \
+    BookingDriverSerializer
 from .pagination import CustomPagination
 
 User = get_user_model()
@@ -279,7 +280,7 @@ class DriverOnboardingView(APIView):
             'name':request.data.get('name'),
             'email':request.data.get('email'),
             'phone_number':request.data.get('phone_number'),
-            'password':request.data.get('password'),
+            'password':'default',
             'role':'driver',
             'first_name':request.data.get('name'),
         }
@@ -303,7 +304,7 @@ class DriverOnboardingView(APIView):
             return Response({"error": "Phone number and Email should be unique"}, status=422)
 
 
-        user = User.objects.filter(email=request.data.get('email'))[0].id
+        user = User.objects.filter(email=request.data.get('phone_number'))[0].id
         if not user:
             return Response(serializer.errors, status=400)
         request.data['user']= user
@@ -317,17 +318,11 @@ class AvailableBookingsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if request.user.role != "driver":
-            return Response({"error": "Only drivers can view available bookings"}, status=403)
 
-        driver = get_object_or_404(Driver, user=request.user)
 
-        if not driver.is_available:
-            return Response({"error": "You have an ongoing booking"}, status=403)
 
-        open_bookings = Booking.objects.filter(bidding_status="open").prefetch_related(
-            Prefetch('bids', queryset=Bidding.objects.filter(driver_id=driver)
-        ))
+
+        open_bookings = Booking.objects.filter(bidding_status="open")
         serializer = BookingSerializer(open_bookings, many=True)
         return Response(serializer.data)
 
@@ -376,24 +371,22 @@ class AssignDriverView(APIView):
             booking = Booking.objects.filter(id=booking_id, bidding_status="open")
             if not booking:
                 return Response({"error": "For This Booking Driver has been assigned"}, status=200)
-            driver = Driver.objects.filter(id=driver_id, is_available=True)
+            driver = Driver.objects.filter(id=driver_id)
             if not driver:
                 return Response({"error": "Driver has been asigned to another Booking"}, status=200)
 
-            bidd =Bidding.objects.filter(booking=booking_id,driver=driver_id)
-            if not bidd:
-                return Response({"error": "Driver did not bidd for this booking"}, status=200)
+
+
             driver=driver[0]
             booking=booking[0]
-            bidd=bidd[0]
 
             booking.driver = driver
-            booking.bidding_status = "closed"
+
             booking.status = 'driver assigned'
             booking.save()
 
-            driver.is_available = False
-            driver.save()
+            # driver.is_available = False
+            # driver.save()
 
             return Response({"message": "Driver assigned successfully"},status=200)
         except Exception as e:
@@ -496,7 +489,8 @@ class DriverTripSummaryView(APIView):
             return Response({"error": "Only drivers can view their trip summary"}, status=403)
 
         driver = get_object_or_404(Driver, user=request.user)
-        completed_trips = Booking.objects.filter(driver=driver, status="Completed")
+        completed_trips = Booking.objects.filter(driver=driver)
+        driver_seralize_data=BookingDriverSerializer(completed_trips,many=True).data
 
         total_trips = completed_trips.count()
         total_km = sum(trip.trip_km for trip in completed_trips)
@@ -505,7 +499,8 @@ class DriverTripSummaryView(APIView):
         return Response({
             "total_trips": total_trips,
             "total_km": total_km,
-            "total_earning": total_earning
+            "total_earning": total_earning,
+            'data':driver_seralize_data
         })
 def parse_date(date_str):
     """Helper function to parse date strings safely."""
@@ -861,7 +856,10 @@ class fetchAllDrivers(APIView):
 
     def get(self,request):
         try:
-            drivers_data = Driver.objects.filter().select_related("user").order_by("-timestamp")
+            if request.user.role == "admin":
+              drivers_data = Driver.objects.filter().select_related("user").order_by("-timestamp")
+            if request.user.role == "vendor":
+              drivers_data = Driver.objects.filter(vendor__user=request.user).select_related("user").order_by("-timestamp")
             data=[]
             if drivers_data:
                 serialize = DriverAdminSerializer(drivers_data,many=True)
@@ -1384,7 +1382,8 @@ class VendorRequestActionView(APIView):
                 user = User.objects.create_user(
                     username=vendor_id,
                     email=vendor_request.email,
-                    password=request.data.get('password', 'default_password123')
+                    password=request.data.get('password', 'default_password123'),
+                    role='vendor'
                 )
 
 
@@ -1491,6 +1490,200 @@ class CreateBookingView(APIView):
             return Response({
                 'error': serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+class StartTrip(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            booking_id=request.data.get('booking_id')
+            if booking_id:
+                obj = Booking.objects.get(id=booking_id)
+                if obj.status != 'not_started':
+                    return Response({
+                        "result": "error",
+                        "message": 'Ride Can not be started in current state'
+                    }, status=200)
+
+                obj.status='started'
+                obj.save()
+                return Response({
+                    'message': 'Trip Started Succesfully',
+
+                }, status=status.HTTP_200_CREATED)
+
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+
+class EndTrip(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            booking_id = request.data.get('booking_id')
+            if booking_id:
+                obj = Booking.objects.get(id=booking_id)
+                if obj.status != 'started':
+                    return Response({
+                        "result": "error",
+                        "message": 'Ride Can not be Ended in current state'
+                    }, status=200)
+
+                obj.status = 'end'
+                obj.save()
+                return Response({
+                    'message': 'Trip Ended Succesfully',
+
+                }, status=status.HTTP_200_CREATED)
+
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+class DriverProfile(APIView):
+    permission_classes = [AllowAny]
+    def get(self,request):
+        try:
+            obj=Driver.objects.get(user=request.user)
+            serialize_data=DriverSerializer(obj).data
+            return Response({
+                'data': serialize_data
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+class DriverProfileEdit(APIView):
+    permission_classes = [AllowAny]
+    def post(self,request):
+        try:
+            data=request.data
+            user=request.user
+            obj=Driver.objects.get(user=user)
+            if data('full_name'):
+                obj.first_name=data('first_name')
+            if data('phone_number'):
+                    obj.first_name = data('phone_number')
+            if data('email'):
+                    obj.first_name = data('email')
+
+            if data('photo'):
+                    obj.first_name = data('photo')
+            obj.save()
+            return Response({
+            'message': 'Profile Edit Succesfully',
+
+          }, status=status.HTTP_200_CREATED)
+
+        except Exception as e:
+           return Response({
+            "result": "error",
+            "message": str(e)
+        }, status=500)
+
+class BookingSingal(APIView):
+    permission_classes = [AllowAny]
+    def get(self,request):
+        try:
+            booking_id=request.query_params.get('booking_id')
+            obj=Booking.objects.get(id=booking_id)
+            serialize_data=BookingSerializer(obj).data
+            return Response({
+                'data': serialize_data
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+class VendorList(APIView):
+    permission_classes = [AllowAny]
+    def get(self,request):
+        try:
+
+            obj=Vendor.objects.all()
+            serialize_data=VendorSerializer(obj,many=True).data
+            return Response({
+                'data': serialize_data
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+
+class BuyBooking(APIView):
+    permission_classes = [AllowAny]
+    def post(self,request):
+        try:
+            booking_id=request.data.get('booking_id')
+            if  not booking_id:
+                return Response({
+                    "result": "error",
+                    "message": 'Booking Id Missing'
+                }, status=500)
+            user=request.user
+            vendor=Vendor.object.get(user=user)
+            booking=Booking.object.get(id=booking_id)
+            if not vendor or not booking:
+                return Response({
+                    "result": "error",
+                    "message": 'Vendor or Booking Missing'
+                }, status=500)
+            booking.bidding_status='closed'
+            booking.vendor=vendor
+            booking.save()
+            return Response({
+                    'message':'Booking Buyed Succesfully'
+                }, status=200)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+
+class VendorBookedBooking(APIView):
+    permission_classes = [AllowAny]
+    def get(self,request):
+        try:
+            user=request.user
+
+            obj=Booking.objects.get(vendor__user=user)
+            serialize_data=BookingSerializer(obj).data
+            return Response({
+                'data': serialize_data
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+class VendorProfile(APIView):
+    permission_classes = [AllowAny]
+    def get(self,request):
+        try:
+            obj=Vendor.objects.get(user=request.user)
+            serialize_data=VendorSerializer(obj).data
+            return Response({
+                'data': serialize_data
+            }, status=200)
         except Exception as e:
             return Response({
                 "result": "error",

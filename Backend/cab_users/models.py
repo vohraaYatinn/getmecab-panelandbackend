@@ -21,20 +21,7 @@ class User(AbstractUser):
     USERNAME_FIELD = "phone_number"
     REQUIRED_FIELDS = ["username"]
 
-class Driver(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={"role": "driver"})
-    aadhaar_number = models.CharField(max_length=20, unique=True,null=True)
-    license_number = models.CharField(max_length=20, unique=True, null=True)
-    city = models.CharField(max_length=100,default='')
-    state = models.CharField(max_length=100,default='')
-    aadhaar_doc = models.FileField(upload_to="aadhaar_docs/", null=True)
-    license_doc = models.FileField(upload_to="license_docs/", null=True)
-    is_available = models.BooleanField(default=True)
-    total_ratings = models.PositiveIntegerField(default=0)
-    total_score = models.PositiveIntegerField(default=0)
-    total_trip= models.PositiveIntegerField(default=0)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    photo = models.ImageField(upload_to='driver_photo/',null=True)
+
 
     @property
     def average_rating(self):
@@ -89,6 +76,21 @@ class Vendor(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
 
+class Driver(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={"role": "driver"})
+    aadhaar_number = models.CharField(max_length=20, unique=True,null=True)
+    license_number = models.CharField(max_length=20, unique=True, null=True)
+    city = models.CharField(max_length=100,default='')
+    state = models.CharField(max_length=100,default='')
+    aadhaar_doc = models.FileField(upload_to="aadhaar_docs/", null=True)
+    license_doc = models.FileField(upload_to="license_docs/", null=True)
+    is_available = models.BooleanField(default=True)
+    total_ratings = models.PositiveIntegerField(default=0)
+    total_score = models.PositiveIntegerField(default=0)
+    total_trip= models.PositiveIntegerField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    photo = models.ImageField(upload_to='driver_photo/',null=True)
+    vendor= models.ForeignKey(Vendor,on_delete=models.CASCADE, related_name="vendor")
 
 class Booking(models.Model):
     BOOKED='BOOKED'
@@ -105,11 +107,12 @@ class Booking(models.Model):
     trip_km = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     fare = models.DecimalField(max_digits=10, decimal_places=2)
     buy_cost = models.DecimalField(max_digits=10, decimal_places=2,null=True,blank=True)
-    status = models.CharField(max_length=20, default='pending')
-    bidding_status = models.CharField(max_length=20, default='pending')
+    status = models.CharField(max_length=20, default='not_started')
+    bidding_status = models.CharField(max_length=20, default='open')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    vendor= models.ForeignKey(Vendor,on_delete=models.CASCADE, related_name="vendor")
+    vendor= models.ForeignKey(Vendor,on_delete=models.CASCADE, related_name="booking_vendor")
+    driver = models.ForeignKey(Driver, on_delete=models.CASCADE)
 
     def clean(self):
         if not self.customer_number or len(self.customer_number) < 10:
