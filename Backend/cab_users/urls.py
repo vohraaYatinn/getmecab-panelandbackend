@@ -8,7 +8,8 @@ from .views import SignupView, LoginView, UserDetailView, CabAvailabilityView, B
     DriverUpdate, CabUpdate, DeleteDriver, DeleteCab, ResetPasswordView, AdminDashboardData, AdminProfileData, \
     DeleteReview, DriverUpdate, CabUpdate, DeleteDriver, DeleteCab, CreateBookingView, VendorRequestView, \
     VendorRequestActionView, \
-    VendorListView, CreateVendorView, VendorBookingListView, PendingVendorListView
+    VendorListView, CreateVendorView, VendorBookingListView, PendingVendorListView, StartTrip, EndTrip, DriverProfile, \
+    DriverProfileEdit, BookingSingal, VendorList, BuyBooking, VendorBookedBooking, VendorProfile
 from django.conf import settings
 from django.conf.urls.static import static
 urlpatterns = [
@@ -54,6 +55,16 @@ urlpatterns = [
     path("delete-driver/",DeleteDriver.as_view()),
     path("delete-cab/",DeleteCab.as_view()),
     path("delete-review/",DeleteReview.as_view()),
+    path("start-trip/",StartTrip.as_view()),
+    path("end-trip/",EndTrip.as_view()),
+    path("driver-profile/",DriverProfile.as_view()),
+    path("vendor-profile/",VendorProfile.as_view()),
+    path("edit-profile/",DriverProfileEdit.as_view()),
+    path("ride-status/",BookingSingal.as_view()),
+    path("vendor-list/",VendorList.as_view()),
+    path("buy-booking",BuyBooking.as_view()),
+    path(" vendor-booked-booking",VendorBookedBooking.as_view()),
+
 
 
 
