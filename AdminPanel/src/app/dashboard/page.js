@@ -26,25 +26,25 @@ useEffect(()=>{
     <>
       <Row>
         <Col xs={12} sm={6} lg={6} xl={6} xxl={3}>
-          <RevenueGrowth data={dashboardResponce?.data?.bookingCompleted}/>
+          <RevenueGrowth data={dashboardResponce?.data?.total_booking}/>
         </Col>
 
         <Col xs={12} sm={6} lg={6} xl={6} xxl={3}>
-          <LeadConversion data={dashboardResponce?.data?.bookingOngoing}/>
+          <LeadConversion data={dashboardResponce?.data?.purchased_booking}/>
         </Col>
 
         <Col xs={12} sm={6} lg={6} xl={6} xxl={3}>
-          <TotalOrders data={dashboardResponce?.data?.total_driver}/>
+          <TotalOrders data={dashboardResponce?.data?.pending_purchase}/>
         </Col>
 
         <Col xs={12} sm={6} lg={6} xl={6} xxl={3}>
-          <AnnualProfit data={dashboardResponce?.data?.ideal_driver}/>
+          <AnnualProfit data={dashboardResponce?.data?.total_vendor}/>
         </Col>        <Col xs={12} sm={6} lg={6} xl={6} xxl={3}>
-          <TotalCab data={dashboardResponce?.data?.total_cab}/>
+          <TotalCab data={dashboardResponce?.data?.vendor_request}/>
         </Col>
-        <Col xs={12} sm={6} lg={6} xl={6} xxl={3}>
+        {/* <Col xs={12} sm={6} lg={6} xl={6} xxl={3}>
           <IdealDriver data={dashboardResponce?.data?.ideal_cab}/>
-        </Col>
+        </Col> */}
       </Row>
 
 
@@ -66,7 +66,7 @@ useEffect(()=>{
        
 
         <Col xs={12} lg={12} xl={12} xxl={12}>
-          <RecentLeads data={dashboardResponce?.data?.initiated_booking}/>
+          <RecentLeads data={dashboardResponce?.data?.pending_purchase_data}/>
         </Col>
       </Row>
 

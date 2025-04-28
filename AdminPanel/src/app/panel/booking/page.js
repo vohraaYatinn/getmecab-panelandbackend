@@ -12,12 +12,14 @@ import { useEffect } from "react";
 import { useState } from "react";
 import AlertMessage from "@/components/AlertMessage/AlertMessage";
 export default function Page() {
+  const [fetchPage,setFetchPage] = useState(1)
   const [data, setData] = useState([])
   const [dataAnalytics, setDataAnalytics] = useState({})
   const [status, setStatus] = useState("");
   const [isChange,setIsChange] = useState(false)
   const [isDeleted,setIsDeleted] = useState(false)
-   const [alert, setAlert] = useState({ message: "", variant: "" });
+  const [alert, setAlert] = useState({ message: "", variant: "" });
+  const [fetchData,setFetchData]=useState(true)
   const [
     bookingResponse,
     bookingError,
@@ -38,7 +40,7 @@ export default function Page() {
   ] = useAxios();
   const [selected, setSelected] = useState(false)
   const fetchActivityByIdfunction = () => {
-    bookingFetch(getBookingsAdmin({}));
+    bookingFetch(getBookingsAdmin({page:fetchPage}));
   };
   const fetchActivityByIdAnalyticsfunction = () => {
     AnalyticsbookingFetch(getBookingsAdminAnalytics({}));
@@ -83,9 +85,17 @@ if (ActionResponse['result'] == 'success')
 },[ActionResponse])
 
 useEffect(()=>{
+  if(fetchData){
+    setFetchData(false)
+  fetchActivityByIdfunction()
+  fetchActivityByIdAnalyticsfunction()}
+},[fetchData])
+useEffect(()=>{
+  
+    setFetchData(false)
   fetchActivityByIdfunction()
   fetchActivityByIdAnalyticsfunction()
-},[])
+},[fetchPage])
 useEffect(()=>{
 
   if(bookingResponse?.result == "success"){
@@ -146,7 +156,8 @@ useEffect(()=>{
 
       <LeadsTable data={data} setSelected={setSelected} deleteRequested={deleteRequested}
       status={status} setStatus={setStatus} changeStatus={changeStatus} setIsChange={setIsChange}
-      setIsDeleted={setIsDeleted} ActionResponse={ActionResponse}
+      setIsDeleted={setIsDeleted} ActionResponse={ActionResponse} setFetchData={setFetchData}
+      setFetchPage={setFetchPage}
       />
     </>
   );

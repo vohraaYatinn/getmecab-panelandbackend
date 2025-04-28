@@ -187,19 +187,20 @@ class BookCabView(APIView):
         #userdata= request.data.get('formData')
         bookingData = request.data
         #cab_id = bookingData.get("cabid")
-        pickup = bookingData.get("pickup_location")
-        drop = bookingData.get("drop_location")
+        pickup = bookingData.get("pick")
+        drop = bookingData.get("drop")
         trip_type = bookingData.get("trip_type")
-        pickup_date = bookingData.get("pickup_date")
+        pickup_date = bookingData.get("pick_time")
+        drop_date = bookingData.get("drop_time",None)
         buy_cost=bookingData.get('buy_cost')
-        customer_email=bookingData.get('customer_email')
+        customer_email=bookingData.get('email')
         customer_name=bookingData.get('customer_name')
-        customer_number=bookingData.get('customer_number')
+        customer_number=bookingData.get('phone_number')
         fare=bookingData.get('fare')
 
 
-        distance_data = gmaps.distance_matrix(pickup, drop)
-        distance_km = round(distance_data["rows"][0]["elements"][0]["distance"]["value"] // 1000,2)
+        # distance_data = gmaps.distance_matrix(pickup, drop)
+        # distance_km = round(distance_data["rows"][0]["elements"][0]["distance"]["value"] // 1000,2)
         # cab  = list(Cab.objects.filter(id=cab_id,is_available=True))
         # if not cab:
         #     return Response({'error': 'Cab Already Booked'}, status=400)
@@ -239,15 +240,15 @@ class BookCabView(APIView):
                                          drop_location=drop,
                                          trip_type=trip_type,
                                          pickup_date=pickup_date,
+                                         drop_date= drop_date if drop_date else None,
                                          fare=fare,
-                                         trip_km=distance_km,
                                          buy_cost=buy_cost)
-        payment= Payment.objects.create(booking=booking,amount_received=int(fare),net_amount=int(fare))
+        #payment= Payment.objects.create(booking=booking,amount_received=int(fare),net_amount=int(fare))
         # cab.is_available = False
         # cab.save()
         serializer = BookingSerializer(booking)
 
-        return Response({ "booking": serializer.data},status=200)
+        return Response({ "booking": serializer.data,'message':'success'},status=200)
 
 class CancelBookingView(APIView):
     permission_classes = [IsAuthenticated]
@@ -628,21 +629,37 @@ class DriverRatingsAPIView(APIView):
             "reviews": reviews
         })
 
+# class GetAutoComplete(APIView):
+#     permission_classes = [AllowAny]
+#     def get(self,request):
+#             query = request.GET.get("search", "")
+#             if not query:
+#                 return Response({"error": "Search query is required"}, status=400)
+#
+#             try:
+#
+#                 places_result = gmaps.places_autocomplete(query, types=["geocode"])
+#                 city_names = [place["description"] for place in places_result]
+#
+#                 return Response({"cities": city_names}, status=200)
+#             except Exception as e:
+#                 return Response({"error": str(e)}, status=500)
+
 class GetAutoComplete(APIView):
     permission_classes = [AllowAny]
-    def get(self,request):
-            query = request.GET.get("search", "")
-            if not query:
-                return Response({"error": "Search query is required"}, status=400)
 
-            try:
+    def get(self, request):
+        query = request.GET.get("search", "")
+        if not query:
+            return Response({"error": "Search query is required"}, status=400)
 
-                places_result = gmaps.places_autocomplete(query, types=["geocode"])
-                city_names = [place["description"] for place in places_result]
+        try:
+            places_result = gmaps.places_autocomplete(query, types=["geocode"], components={"country": "IN"})
+            city_names = [place["description"] for place in places_result]
 
-                return Response({"cities": city_names}, status=200)
-            except Exception as e:
-                return Response({"error": str(e)}, status=500)
+            return Response({"cities": city_names}, status=200)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
 
 
 class ApplyCouponAPIView(APIView):
@@ -792,7 +809,7 @@ class fetchAllBookings(APIView):
 
     def get(self, request):
         try:
-            bookings = Booking.objects.filter().select_related("driver", "user").order_by("-timestamp")
+            bookings = Booking.objects.filter().select_related("driver", "vendor").order_by("-created_at")
             paginator = self.pagination_class()
             paginated_bookings = paginator.paginate_queryset(bookings, request)
             serializer = BookingAdminSerializer(paginated_bookings, many=True)
@@ -1185,23 +1202,21 @@ class AdminDashboardData(APIView):
 
     def get(self, request):
         try:
+            total_booking=Booking.objects.all()
+            purchased_booking= total_booking.filter(bidding_status='closed',status='not_started').count()
+            pending_purchase= total_booking.filter(bidding_status='open',status='not_started')
+            total_vendor=Vendor.objects.all().count()
+            vendor_request= VendorRequest.objects.filter(status='pending').count()
 
-            bookingOngoing = Booking.objects.filter(status="ongoing").count()
-            bookingCompleted = Booking.objects.filter(status="completed").count()
-            total_driver=Driver.objects.all().count()
-            ideal_driver=Driver.objects.filter(is_available=True).count()
-            total_cab=Cab.objects.all().count()
-            ideal_cab=Cab.objects.filter(is_available=True).count()
-            initiated_booking=Booking.objects.filter(status='initiated')
-            initiated_booking=BookingAdminSerializer(initiated_booking,many=True).data
+
+            initiated_booking=BookingAdminSerializer(pending_purchase,many=True).data
             data = {
-                "bookingOngoing":bookingOngoing,
-                "bookingCompleted":bookingCompleted,
-                'total_driver':total_driver,
-                'ideal_driver':ideal_driver,
-                'total_cab':total_cab,
-                'ideal_cab':ideal_cab,
-                'initiated_booking':initiated_booking
+                "total_booking":total_booking.count(),
+                "purchased_booking":purchased_booking,
+                "pending_purchase":pending_purchase.count(),
+                "pending_purchase_data":initiated_booking,
+                'total_vendor':total_vendor,
+                'vendor_request':vendor_request
 
             }
             return Response({"result":"success" , "data": data}, status=200)

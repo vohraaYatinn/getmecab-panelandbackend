@@ -77,7 +77,7 @@ const LeftSidebar = ({ toogleActive }) => {
                 <span className="title">Vendor</span>
               </Link>
             </div>
-            <div className="menu-item">
+            {/* <div className="menu-item">
               <Link
                 href="/drivers/"
                 className={`menu-link ${
@@ -124,7 +124,7 @@ const LeftSidebar = ({ toogleActive }) => {
                 <i className="material-symbols-outlined">loyalty</i>
                 <span className="title">Coupons</span>
               </Link>
-            </div>
+            </div> */}
 
        
 

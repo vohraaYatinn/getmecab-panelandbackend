@@ -140,7 +140,7 @@ const RecentLeads = ({data}) => {
                     <th scope="col">Trip Type</th>
                     <th scope="col">Pickup Date</th>
                     <th scope="col">Fare</th>
-                    <th scope="col">KM</th>
+                    <th scope="col">Buy Cost</th>
                     <th scope="col">Status</th>
                     {/* <th scope="col">Bidding Status</th>
                     <th scope="col">Actions</th> */}
@@ -154,7 +154,7 @@ const RecentLeads = ({data}) => {
         
 
           <td>
-            <b>{defaultValue.user?.first_name || "N/A"}</b><br/> {defaultValue.user?.email || "N/A"}<br/> {defaultValue.user?.phone_number || "N/A"}
+            <b>{defaultValue?.customer_name || "N/A"}</b><br/> {defaultValue.customer_number || "N/A"}<br/> {defaultValue?.customer_email || "N/A"}
           </td>
 
          
@@ -180,14 +180,14 @@ const RecentLeads = ({data}) => {
           </td>
 
           <td className="text-body">
-            {`${defaultValue.trip_km} km` || "N/A"}
+            {`₹${defaultValue.buy_cost}` || "N/A"}
           </td>
 
           <td>
             <span
               className={`badge bg-opacity-10 p-2 fs-12 fw-normal text-capitalize ${defaultValue.status.toLowerCase()}`}
             >
-              {defaultValue.status}
+              {defaultValue?.bidding_status==='open'?'Not Buyed':'Buyed'}
             </span>
           </td>
 

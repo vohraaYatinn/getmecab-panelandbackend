@@ -105,7 +105,7 @@ const TotalCab = ({data}) => {
         <Card.Body className="p-4">
           <div className="d-flex justify-content-between">
             <div className="mb-35">
-              <span>Total Cab</span>
+              <span>Pending Vendor Request</span>
               <h3 className="fs-20 mt-1 mb-0">{data}</h3>
             </div>
 
