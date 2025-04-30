@@ -196,41 +196,15 @@ class BookCabView(APIView):
         customer_email=bookingData.get('email')
         customer_name=bookingData.get('customer_name')
         customer_number=bookingData.get('phone_number')
+        total_kms=bookingData.get('total_kms')
+        carrier=bookingData.get('carrier')
+        toll_included=bookingData.get('toll_included')
+        tax_included=bookingData.get('tax_included')
+        driver_allowance=bookingData.get('driver_allowance')
+        special_requirements=bookingData.get('special_requirements')
+        is_admin=bookingData.get('is_admin')
         fare=bookingData.get('fare')
-
-
-        # distance_data = gmaps.distance_matrix(pickup, drop)
-        # distance_km = round(distance_data["rows"][0]["elements"][0]["distance"]["value"] // 1000,2)
-        # cab  = list(Cab.objects.filter(id=cab_id,is_available=True))
-        # if not cab:
-        #     return Response({'error': 'Cab Already Booked'}, status=400)
-        # cab=cab[0]
-        # fare = distance_km * cab.price_per_km
-        # if trip_type == "round_trip":
-        #     fare *= 2
-        #     distance_km *= 2
-        # distance_km=round(distance_km,2)
-        # fare=round(fare,2)
-        # user_data = {
-        #     'username':'customer' + str(len(list(User.objects.filter(role='customer')))+1),
-        #     'first_name':userdata.get('name'),
-        #     'email':userdata.get('email'),
-        #     'phone_number':userdata.get('phone'),
-        #     'role':'customer',
-        #     'password':'alkjaklsdjaskd',
-        # }
-        #
-        # user = User.objects.filter(phone_number=userdata.get('phone'))
-        # if not user:
-        #     serializer = SignupSerializer(data=user_data)
-        #     if serializer.is_valid():
-        #         serializer.save()
-        #     else:
-        #         return Response({'error':serializer.errors},status=400)
-        #     user = User.objects.filter(phone_number=userdata.get('phone'))
-
-
-
+        vehicle_type=bookingData.get('vehicle_type')
 
 
         booking = Booking.objects.create(customer_name=customer_name,
@@ -242,13 +216,45 @@ class BookCabView(APIView):
                                          pickup_date=pickup_date,
                                          drop_date= drop_date if drop_date else None,
                                          fare=fare,
-                                         buy_cost=buy_cost)
+                                         buy_cost=buy_cost,
+                                         trip_km=total_kms,
+                                         created_by=request.user,
+                                         isAdmin=is_admin,
+                                         carrier=carrier if tax_included=='yes' else False,
+                                         driver_allowance=driver_allowance if driver_allowance=='include' else False,
+                                         tax_included=True if tax_included=='include' else False,
+                                         toll_included=toll_included if toll_included=='include' else False,
+                                         special_requirements=special_requirements,
+                                         vehicle_type=vehicle_type
+                                         )
         #payment= Payment.objects.create(booking=booking,amount_received=int(fare),net_amount=int(fare))
         # cab.is_available = False
         # cab.save()
         serializer = BookingSerializer(booking)
 
         return Response({ "booking": serializer.data,'message':'success'},status=200)
+
+
+class CalculateKm(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+
+
+        pickup = request.query_params.get("pick")
+        drop = request.query_params.get("drop")
+        distance_data = gmaps.distance_matrix(pickup, drop)
+        distance_km = round(distance_data["rows"][0]["elements"][0]["distance"]["value"] // 1000,2)
+        # cab  = list(Cab.objects.filter(id=cab_id,is_available=True))
+        # if not cab:
+        #     return Response({'error': 'Cab Already Booked'}, status=400)
+        # cab=cab[0]
+        # fare = distance_km * cab.price_per_km
+        # if trip_type == "round_trip":
+        #     fare *= 2
+        #     distance_km *= 2
+        # distance_km=round(distance_km,2)
+        return Response({ 'distance_km':distance_km,'message':'success'},status=200)
 
 class CancelBookingView(APIView):
     permission_classes = [IsAuthenticated]
@@ -649,7 +655,7 @@ class GetAutoComplete(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        query = request.GET.get("search", "")
+        query = request.GET.get("query", "")
         if not query:
             return Response({"error": "Search query is required"}, status=400)
 

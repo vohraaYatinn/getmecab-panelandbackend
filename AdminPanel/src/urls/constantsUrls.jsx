@@ -45,6 +45,7 @@ export class Urls {
     static CREATE_VENDOR_REQUEST = Urls.API_PREFIX + 'create-vendor-requests/';
     static BOOKING_SERVICE = Urls.API_PREFIX + 'create-booking/';
     static CITY_AUTOCOMPLETE = Urls.API_PREFIX + 'city-autocomplete/';
+    static CALCULATE_KM = Urls.API_PREFIX + 'calculate-km/';
 
 
 

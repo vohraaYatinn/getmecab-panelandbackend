@@ -11,13 +11,15 @@ import AssignDriver from "./assignDriver";
 import AlertMessage from "@/components/AlertMessage/AlertMessage";
 import useAxios from '@/network/useAxios';
 import ActionSheet from "@/components/ActionSheet/ActionSheet";
-import { bookingService } from "@/urls/urls";
+import { bookingService,cityAutocomplete,calculateKmService } from "@/urls/urls";
 
 const LeadsTable = ({data, setSelected, deleteRequested,status,setStatus,changeStatus,setIsChange,setIsDeleted,ActionResponse, setFetchData,setFetchPage}) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   
+  
+  const [cityAutocompleteResponse, cityAutocompleteError, cityAutocompleteLoading, cityAutocompleteSubmit] = useAxios();
   const [createResponse, createError, createLoading, createSubmit] = useAxios();
   const [loading, setLoading] = useState(false);
   const [tableData, setTableData] = useState([]);
@@ -35,6 +37,10 @@ const LeadsTable = ({data, setSelected, deleteRequested,status,setStatus,changeS
   const [isModalOpen,setIsModalOpen] = useState(false);
   const [bookingId,setBookingId] = useState(null);
   const [action,setAction] = useState('');
+  const [pickSuggestions, setPickSuggestions] = useState([]);
+  const [dropSuggestions, setDropSuggestions] = useState([]);
+  const [showPickSuggestions, setShowPickSuggestions] = useState(false);
+  const [showDropSuggestions, setShowDropSuggestions] = useState(false);
     const [formData, setFormData] = useState({
       customer_name: "",
       phone_number: "",
@@ -46,6 +52,15 @@ const LeadsTable = ({data, setSelected, deleteRequested,status,setStatus,changeS
       trip_type:'',
       buy_cost:'',
       fare:'',
+      vehicle_type: "",
+      total_kms: "",
+      carrier: "",
+      toll_included: "",
+      tax_included: "",
+      driver_allowance: "",
+      special_requirements: "",
+      is_admin:false
+
     });
 
     const handleSubmit = (e) => {
@@ -81,6 +96,12 @@ const LeadsTable = ({data, setSelected, deleteRequested,status,setStatus,changeS
       // Clear form errors if any
       setFormErrors({});
     
+      // Clear suggestions
+      setPickSuggestions([]);
+      setDropSuggestions([]);
+      setShowPickSuggestions(false);
+      setShowDropSuggestions(false);
+    
       // Submit your form (API call or state update)
       console.log(formData);
      createSubmit(bookingService(formData));
@@ -102,16 +123,42 @@ if(createResponse?.message==='success'){
     trip_type:'',
     buy_cost:'',
     fare:'',
+    vehicle_type: "",
+    total_kms: "",
+    carrier: "",
+    toll_included: "",
+    tax_included: "",
+    driver_allowance: "",
+    special_requirements: ""
   });
   setFormErrors({});
+  setPickSuggestions([]);
+  setDropSuggestions([]);
+  setShowPickSuggestions(false);
+  setShowDropSuggestions(false);
   setAlert({ message: 'Booking Created Succesfully', variant: "success" });
   setFetchData(true)
   setFetchPage(1)
 }
     },[createResponse])
-
+   
   const [actionResponse, actionError, actionLoading, actionSubmit] = useAxios();
+   const [calculateKmResponse, calculateKmError, calculateKmLoading, calculateKmSubmit] = useAxios();
 
+  const  calculateKm=()=>{
+    console.log('here3')
+    if(!showDropSuggestions &&  !showPickSuggestions){
+      calculateKmSubmit(calculateKmService(formData))
+    }
+  }
+useEffect(()=>{
+if(calculateKmResponse?.message==='success'){
+  setFormData(prev=>(
+    {
+      ...prev,['total_kms']:calculateKmResponse?.distance_km?calculateKmResponse?.distance_km:''
+    }))
+}
+},[calculateKmResponse])
   const handleSelect = (eventKey) => {
     setStatus(eventKey);
   };
@@ -144,10 +191,57 @@ if(createResponse?.message==='success'){
         }))
     }
   
+    // Handle location autocomplete
+    if (name === 'pick' && value.length > 2) {
+      cityAutocompleteSubmit(cityAutocomplete({ query: value }));
+      setShowPickSuggestions(true);
+    }
+    
+    if (name === 'drop' && value.length > 2) {
+      cityAutocompleteSubmit(cityAutocomplete({ query: value }));
+      setShowDropSuggestions(true);
+    }
+  
     setFormData(prev => ({
       ...prev,
       [name]: value
-    }));}
+    }));
+  };
+
+  // Handle location suggestions
+  useEffect(() => {
+  console.log(cityAutocompleteResponse?.cities)
+    if (cityAutocompleteResponse?.cities) {
+      // Check which field is currently being typed in
+      if (showPickSuggestions) {
+        setPickSuggestions(cityAutocompleteResponse.cities);
+      } else if (showDropSuggestions) {
+        setDropSuggestions(cityAutocompleteResponse.cities);
+      }
+    }
+  }, [cityAutocompleteResponse, showPickSuggestions, showDropSuggestions]);
+
+  const handleSuggestionSelect = (suggestion, fieldName) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: suggestion
+    }));
+    
+    if (fieldName === 'pick') {
+      setShowPickSuggestions(false);
+      console.log('here1')
+     
+    } else if (fieldName === 'drop') {
+      console.log('here2')
+      setShowDropSuggestions(false);
+      
+    }
+   
+  };
+  useEffect(()=>{
+calculateKm()
+  },[showDropSuggestions,showPickSuggestions]);
+
   useEffect(() => {
     if (data) {
       setTableData(data.data || []);
@@ -362,9 +456,15 @@ if(createResponse?.message==='success'){
           onClose={() => setAlert({ message: "", variant: "" })}
         />
       )}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
+      <Modal show={showModal} onHide={() => {
+        setShowModal(false);
+        setPickSuggestions([]);
+        setDropSuggestions([]);
+        setShowPickSuggestions(false);
+        setShowDropSuggestions(false);
+      }}>
   <Modal.Header closeButton>
-    <Modal.Title>Create New Vendor</Modal.Title>
+    <Modal.Title>Create New Booking</Modal.Title>
   </Modal.Header>
   <Modal.Body>
     <Form onSubmit={handleSubmit}>
@@ -427,8 +527,23 @@ if(createResponse?.message==='success'){
           name="pick"
           value={formData.pick}
           onChange={handleInputChange}
+          onBlur={() => setTimeout(() => setShowPickSuggestions(false), 200)}
           required
         />
+        {showPickSuggestions && pickSuggestions.length > 0 && (
+          <div className="position-absolute bg-white border rounded p-2 w-100 z-index-1000" style={{ maxHeight: '200px', overflowY: 'auto', zIndex: 1000 }}>
+            {pickSuggestions.map((suggestion, index) => (
+              <div 
+                key={index} 
+                className="p-2 cursor-pointer hover-bg-light"
+                style={{ cursor: 'pointer' }}
+                onClick={() => handleSuggestionSelect(suggestion, 'pick')}
+              >
+                {suggestion}
+              </div>
+            ))}
+          </div>
+        )}
       </Form.Group>
 
       <Form.Group className="mb-3">
@@ -438,9 +553,25 @@ if(createResponse?.message==='success'){
           name="drop"
           value={formData.drop}
           onChange={handleInputChange}
+          onBlur={() => setTimeout(() => setShowDropSuggestions(false), 200)}
           required
         />
+        {showDropSuggestions && dropSuggestions.length > 0 && (
+          <div className="position-absolute bg-white border rounded p-2 w-100 z-index-1000" style={{ maxHeight: '200px', overflowY: 'auto', zIndex: 1000 }}>
+            {dropSuggestions.map((suggestion, index) => (
+              <div 
+                key={index} 
+                className="p-2 cursor-pointer hover-bg-light"
+                style={{ cursor: 'pointer' }}
+                onClick={() => handleSuggestionSelect(suggestion, 'drop')}
+              >
+                {suggestion}
+              </div>
+            ))}
+          </div>
+        )}
       </Form.Group>
+      
       <Form.Group className="mb-3">
         <Form.Label>Trip Type</Form.Label>
         <Form.Select
@@ -454,6 +585,102 @@ if(createResponse?.message==='success'){
           <option value="round_trip">Round Trip</option>
         </Form.Select>
       </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Select Vehicle</Form.Label>
+        <Form.Select
+          name="vehicle_type"
+          value={formData.vehicle_type}
+          onChange={handleInputChange}
+          required
+        >
+          <option value="">Select Vehicle Type</option>
+          <option value="sedan">Sedan</option>
+          <option value="suv">SUV</option>
+          <option value="luxury">Luxury</option>
+          <option value="mini_bus">Mini Bus</option>
+          <option value="bus">Bus</option>
+        </Form.Select>
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Total KMs</Form.Label>
+        <Form.Control
+          type="number"
+          name="total_kms"
+          value={formData.total_kms}
+          onChange={handleInputChange}
+          required
+        />
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Extra Price Carrier</Form.Label>
+        <Form.Select
+          name="carrier"
+          value={formData.carrier}
+          onChange={handleInputChange}
+          required
+        >
+          <option value="">Select Option</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </Form.Select>
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Toll Included</Form.Label>
+        <Form.Select
+          name="toll_included"
+          value={formData.toll_included}
+          onChange={handleInputChange}
+          required
+        >
+          <option value="">Select Option</option>
+          <option value="included">Included</option>
+          <option value="not_included">Not Included</option>
+        </Form.Select>
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Tax Included</Form.Label>
+        <Form.Select
+          name="tax_included"
+          value={formData.tax_included}
+          onChange={handleInputChange}
+          required
+        >
+          <option value="">Select Option</option>
+          <option value="included">Included</option>
+          <option value="not_included">Not Included</option>
+        </Form.Select>
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Driver Allowance</Form.Label>
+        <Form.Select
+          name="driver_allowance"
+          value={formData.driver_allowance}
+          onChange={handleInputChange}
+          required
+        >
+          <option value="">Select Option</option>
+          <option value="included">Included</option>
+          <option value="not_included">Not Included</option>
+        </Form.Select>
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Special Requirements</Form.Label>
+        <Form.Control
+          as="textarea"
+          rows={3}
+          name="special_requirements"
+          value={formData.special_requirements}
+          onChange={handleInputChange}
+        />
+      </Form.Group>
+
       <Form.Group className="mb-3">
         <Form.Label>Pick Time</Form.Label>
         <Form.Control
@@ -468,8 +695,6 @@ if(createResponse?.message==='success'){
           {formErrors.pick_time}
         </Form.Control.Feedback>
       </Form.Group>
-
-
 
       {/* Only show Drop Time if trip_type is "roundtrip" */}
       {formData.trip_type === "round_trip" && (

@@ -101,6 +101,9 @@ export const vendorRequestAction = (payload_data) => {
 export const cityAutocomplete = (payload_data) => {
   return project.get(Urls.CITY_AUTOCOMPLETE, payload_data);
 }
+export const calculateKmService = (payload_data) => {
+  return project.get(Urls.CALCULATE_KM, payload_data);
+}
 export const bookingService = (payload_data) => {
   return project.post(Urls.BOOKING_SERVICE , payload_data);
 }

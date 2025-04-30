@@ -96,12 +96,15 @@ class Booking(models.Model):
     one_way='one_way'
     round_trip='round_trip'
     TRIP_TYPE_CHOICES = [(one_way,'one_way'),(round_trip,'round_trip')]
+
     customer_name = models.CharField(max_length=100)
     customer_number = models.CharField(max_length=15)
     customer_email = models.EmailField(max_length=100, blank=True, null=True)
     pickup_location = models.CharField(max_length=255)
     drop_location = models.CharField(max_length=255)
     trip_type = models.CharField(max_length=20, choices=TRIP_TYPE_CHOICES)
+    special_requirements = models.CharField(max_length=200, default='')
+    vehicle_type = models.CharField(max_length=200, default='')
     pickup_date = models.DateTimeField(default=None)
     drop_date = models.DateTimeField(null=True, blank=True)
     trip_km = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -113,6 +116,14 @@ class Booking(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     vendor= models.ForeignKey(Vendor,on_delete=models.CASCADE, related_name="booking_vendor",null=True, blank=True)
     driver = models.ForeignKey(Driver, on_delete=models.CASCADE,null=True, blank=True)
+    created_by = models.ForeignKey(User,on_delete=models.CASCADE)
+    isAdmin=models.BooleanField()
+    carrier=models.BooleanField()
+    driver_allowance=models.BooleanField()
+    tax_included=models.BooleanField()
+    toll_included=models.BooleanField()
+
+
 
     def clean(self):
         if not self.customer_number or len(self.customer_number) < 10:
