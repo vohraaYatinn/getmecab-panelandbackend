@@ -75,6 +75,7 @@ class Vendor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     modified_at = models.DateTimeField(auto_now=True)
+    balance =models.IntegerField(default=0)
 
 class Driver(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={"role": "driver"})
@@ -152,24 +153,19 @@ class Bidding(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
 class Payment(models.Model):
-    PENDING = "pending"
-    COMPLETED = "completed"
+    credit = "credit"
+    debit = "debit"
 
     PAYMENT_STATUS_CHOICES = [
-        (PENDING, "Pending"),
-        (COMPLETED, "Completed"),
+        (credit, "credit"),
+        (debit, "debit"),
     ]
 
     booking = models.OneToOneField(Booking, on_delete=models.CASCADE)
-    amount_received = models.DecimalField(max_digits=10, decimal_places=2)
-    amount_to_pay = models.DecimalField(max_digits=10, decimal_places=2,default=0)
-    net_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
-    customer_payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default=PENDING)
-    driver_payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default=PENDING)
+    vendor = models.OneToOneField(Vendor,on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES)
 
-    def save(self, *args, **kwargs):
-        self.net_amount = self.amount_received - self.amount_to_pay
-        super().save(*args, **kwargs)
 
 
 class DriverRating(models.Model):

@@ -4,7 +4,7 @@ from random import random
 import requests
 from django.contrib.auth import get_user_model
 from django.core.serializers import serialize
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Sum
 from django.shortcuts import get_object_or_404
 from pymupdf import message
 from rest_framework import status
@@ -1668,7 +1668,15 @@ class BuyBooking(APIView):
                 }, status=500)
             booking.bidding_status='closed'
             booking.vendor=vendor
+            vendor.balance= vendor.balance + booking.buy_cost
+            payment=Payment.object.create(
+                booking=booking_id,
+                vendor=vendor.id,
+                amount=booking.buy_cost,
+                payment_type='credit'
+            )
             booking.save()
+            vendor.save()
             return Response({
                     'message':'Booking Buyed Succesfully'
                 }, status=200)
@@ -1710,3 +1718,64 @@ class VendorProfile(APIView):
                 "result": "error",
                 "message": str(e)
             }, status=500)
+
+class PayToVendor(APIView):
+    permission_classes = [AllowAny]
+    def post(self,request):
+        try:
+            vendor_id=request.data.get('vendor_id')
+            amount=request.data.get('amount')
+            vendor=Vendor.object.get(id=vendor_id)
+            if amount>vendor.balance:
+                return Response({
+                    "result": "error",
+                    "message": f'Vendor balance is {vendor.balance}. You are paying Extra'
+                }, status=500)
+
+            payment=Payment.object.create(
+                vendor=vendor_id,
+                payment_type='debit',
+                amount=amount
+            )
+
+            vendor.balance=vendor.balance-amount
+            vendor.save()
+
+            return Response({
+                'message':'success'
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+class GetTransaction(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+            vendor_id = request.query_params.get('vendor_id')
+
+            if vendor_id:
+                payments = Payment.objects.filter(vendor_id=vendor_id)
+                vendor = Vendor.objects.get(id=vendor_id)
+                total_balance = vendor.balance
+            else:
+                payments = Payment.objects.all()
+                total_balance = Vendor.objects.aggregate(total=Sum('balance'))['total']
+
+            serialized_data = PaymentSerializer(payments, many=True).data
+
+            return Response({
+                'data': serialized_data,
+                'total_balance': total_balance
+            }, status=200)
+
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+
