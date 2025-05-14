@@ -93,7 +93,7 @@ class Cab(models.Model):
     pollutions_year_from=models.DateTimeField(null=True)
     pollutions_year_to=models.DateTimeField(null=True)
     fule=models.CharField(max_length=20)
-    vendor= models.ForeignKey(Vendor,on_delete=models.CASCADE, related_name="vendor")
+    vendor= models.ForeignKey(Vendor,on_delete=models.CASCADE, related_name="cab")
 
 class Booking(models.Model):
     one_way='one_way'
