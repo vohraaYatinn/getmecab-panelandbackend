@@ -23,6 +23,7 @@ class CabSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cab
         fields = "__all__"
+    vendor = serializers.PrimaryKeyRelatedField(queryset=Vendor.objects.all())
 
 class BookingSerializer(serializers.ModelSerializer):
     class Meta:

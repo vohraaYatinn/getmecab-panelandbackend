@@ -312,9 +312,13 @@ class DriverOnboardingView(APIView):
 
 
         user = User.objects.filter(email=request.data.get('phone_number'))[0].id
+        vendor = Vendor.objects.get(user=request.user.id)
         if not user:
             return Response(serializer.errors, status=400)
         request.data['user']= user
+        if not request.data.get('vendor'):
+            request.data['vendor'] = vendor.id
+
         serializer = DriverSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -528,7 +532,9 @@ class AddCabView(APIView):
 
         if Cab.objects.filter(cab_number=request.data.get('cab_number')).exists():
             return Response({'error':"This cab number is already registered.",'result':'failure'}, status=400)
-
+        vendor = Vendor.objects.get(user=request.user.id)
+        if not request.data.get('vendor'):
+            request.data['vendor'] = vendor.id
         serializer = CabSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -1789,6 +1795,47 @@ class GetTransaction(APIView):
             return Response({
                 'data': serialized_data,
                 'total_balance': total_balance
+            }, status=200)
+
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+class VendorDriver(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+            user = request.user
+            vendor_id=Vendor.objects.get(user=user)
+            driver = Driver.objects.filter(vendor=vendor_id)
+            serialized_data=DriverSerializer(driver,many=True).data
+            return Response({
+                'data': serialized_data,
+
+            }, status=200)
+
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
+
+class VendorCab(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        try:
+            user = request.user
+            vendor_id = Vendor.objects.get(user=user)
+            driver = Cab.objects.filter(vendor=vendor_id)
+            serialized_data = DriverSerializer(driver, many=True).data
+            return Response({
+                'data': serialized_data,
+
             }, status=200)
 
         except Exception as e:

@@ -30,28 +30,6 @@ class User(AbstractUser):
         return round(self.total_score / self.total_ratings, 1)
 
 
-class Cab(models.Model):
-    SUV = 'SUV'
-    SEDAN = 'SEDAN'
-
-    CAB_TYPE_CHOICES = [(SUV, "SUV"), (SEDAN, "SEDAN")]
-    cab_number = models.CharField(max_length=20, unique=True)
-    cab_name = models.CharField(max_length=20,default='')
-    cab_type = models.CharField(max_length=20, choices=CAB_TYPE_CHOICES)
-    price_per_km = models.IntegerField(default=0)
-    is_available = models.BooleanField(default=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    one_year_from=models.DateTimeField(null=True)
-    one_year_to=models.DateTimeField(null=True)
-    five_year_from=models.DateTimeField(null=True)
-    five_year_to=models.DateTimeField(null=True)
-    fitness_year_from=models.DateTimeField(null=True)
-    fitness_year_to=models.DateTimeField(null=True)
-    insurance_year_from=models.DateTimeField(null=True)
-    insurance_year_to=models.DateTimeField(null=True)
-    pollutions_year_from=models.DateTimeField(null=True)
-    pollutions_year_to=models.DateTimeField(null=True)
-    fule=models.CharField(max_length=20)
 
 
 class VendorRequest(models.Model):
@@ -91,6 +69,30 @@ class Driver(models.Model):
     total_trip= models.PositiveIntegerField(default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
     photo = models.ImageField(upload_to='driver_photo/',null=True)
+    vendor= models.ForeignKey(Vendor,on_delete=models.CASCADE, related_name="vendor")
+
+class Cab(models.Model):
+    SUV = 'SUV'
+    SEDAN = 'SEDAN'
+
+    CAB_TYPE_CHOICES = [(SUV, "SUV"), (SEDAN, "SEDAN")]
+    cab_number = models.CharField(max_length=20, unique=True)
+    cab_name = models.CharField(max_length=20,default='')
+    cab_type = models.CharField(max_length=20, choices=CAB_TYPE_CHOICES)
+    price_per_km = models.IntegerField(default=0)
+    is_available = models.BooleanField(default=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    one_year_from=models.DateTimeField(null=True)
+    one_year_to=models.DateTimeField(null=True)
+    five_year_from=models.DateTimeField(null=True)
+    five_year_to=models.DateTimeField(null=True)
+    fitness_year_from=models.DateTimeField(null=True)
+    fitness_year_to=models.DateTimeField(null=True)
+    insurance_year_from=models.DateTimeField(null=True)
+    insurance_year_to=models.DateTimeField(null=True)
+    pollutions_year_from=models.DateTimeField(null=True)
+    pollutions_year_to=models.DateTimeField(null=True)
+    fule=models.CharField(max_length=20)
     vendor= models.ForeignKey(Vendor,on_delete=models.CASCADE, related_name="vendor")
 
 class Booking(models.Model):
