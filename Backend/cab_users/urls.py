@@ -9,8 +9,9 @@ from .views import SignupView, LoginView, UserDetailView, CabAvailabilityView, B
     DeleteReview, DriverUpdate, CabUpdate, DeleteDriver, DeleteCab, CreateBookingView, VendorRequestView, \
     VendorRequestActionView, \
     VendorListView, CreateVendorView, VendorBookingListView, PendingVendorListView, StartTrip, EndTrip, DriverProfile, \
-    DriverProfileEdit, BookingSingal, VendorList, BuyBooking, VendorBookedBooking, VendorProfile, CalculateKm, \
+    DriverProfileEdit, BookingSingal, VendorList, BuyBooking, VendorBookedBooking, VendorProfile, GetAllRidesBooking, CalculateKm, \
     PayToVendor,GetTransaction
+    
 from django.conf import settings
 from django.conf.urls.static import static
 urlpatterns = [
@@ -65,6 +66,9 @@ urlpatterns = [
     path("ride-status/",BookingSingal.as_view()),
     path("vendor-list/",VendorList.as_view()),
 
+    path("buy-booking",BuyBooking.as_view()),
+    path("vendor-booked-booking",VendorBookedBooking.as_view()),
+    path("get-all-rides",GetAllRidesBooking.as_view()),
 
 
 

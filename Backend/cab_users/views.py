@@ -17,7 +17,7 @@ from .models import Cab, Booking, Driver, Bidding, Payment, DriverRating, Coupon
 from .serializers import UserSerializer, SignupSerializer, CabSerializer, BookingSerializer, BiddingSerializer, \
     DriverSerializer, PaymentSerializer, CouponSerializer, OnlyBookingSerializer, BookingAdminSerializer, \
     DriverAdminSerializer, DriverRatingAdminSerializer, VendorRequestSerializer, VendorSerializer, \
-    BookingDriverSerializer
+    BookingDriverSerializer, BookingWithDriverSerializer
 from .pagination import CustomPagination
 
 User = get_user_model()
@@ -322,7 +322,7 @@ class DriverOnboardingView(APIView):
         return Response(serializer.errors, status=400)
 
 class AvailableBookingsView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     def get(self, request):
 
@@ -375,7 +375,7 @@ class AssignDriverView(APIView):
             booking_id = request.data.get("booking_id")
             driver_id = request.data.get("driver_id")
 
-            booking = Booking.objects.filter(id=booking_id, bidding_status="open")
+            booking = Booking.objects.filter(id=booking_id)
             if not booking:
                 return Response({"error": "For This Booking Driver has been assigned"}, status=200)
             driver = Driver.objects.filter(id=driver_id)
@@ -998,7 +998,7 @@ class PhoneOtpVerify(APIView):
             if response.status_code != 200:
                 raise Exception("The OTP is either invalid or has expired.")
             check_if_Valid_otp = response.json()['data']['verificationStatus'] == 'VERIFICATION_COMPLETED'
-            user_req = User.objects.filter(phone_number="+91"+phone)
+            user_req = User.objects.filter(phone_number=phone)
             if user_req:
                 refresh = RefreshToken.for_user(user_req[0])
                 return Response({"result" : "success", "data":check_if_Valid_otp, "user":True, "access": str(refresh.access_token), "refresh": str(refresh)}, 200)
@@ -1475,14 +1475,15 @@ class VendorRequestView(APIView):
 
 
             serializer = VendorRequestSerializer(data=request.data)
-
             if serializer.is_valid():
                 serializer.save()
                 return Response({
                     "result": "success",
-                    "message": "Vendor request submitted successfully",
+                    "message": "Vendor request submitted successfully, Please wait till admin approves this request",
 
                 }, status=201)
+
+
             return Response({
                 "result": "failure",
                 "message": "Invalid data",
@@ -1687,14 +1688,15 @@ class BuyBooking(APIView):
             }, status=500)
 
 
+
+
 class VendorBookedBooking(APIView):
     permission_classes = [AllowAny]
     def get(self,request):
         try:
             user=request.user
-
-            obj=Booking.objects.get(vendor__user=user)
-            serialize_data=BookingSerializer(obj).data
+            obj=Booking.objects.select_related("driver").get(vendor__user=user)
+            serialize_data=BookingWithDriverSerializer(obj).data
             return Response({
                 'data': serialize_data
             }, status=200)
@@ -1703,6 +1705,23 @@ class VendorBookedBooking(APIView):
                 "result": "error",
                 "message": str(e)
             }, status=500)
+
+class GetAllRidesBooking(APIView):
+    permission_classes = [AllowAny]
+    def get(self,request):
+        try:
+            user=request.user
+            obj=Booking.objects.filter(vendor__user=user).select_related("driver")
+            serialize_data=BookingWithDriverSerializer(obj, many=True).data
+            return Response({
+                'data': serialize_data
+            }, status=200)
+        except Exception as e:
+            return Response({
+                "result": "error",
+                "message": str(e)
+            }, status=500)
+
 
 class VendorProfile(APIView):
     permission_classes = [AllowAny]

@@ -133,3 +133,10 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = "__all__"
+
+
+class BookingWithDriverSerializer(serializers.ModelSerializer):
+    driver = DriverSerializer()
+    class Meta:
+        model = Booking
+        fields = "__all__"
