@@ -67,9 +67,9 @@ urlpatterns = [
     path("ride-status/",BookingSingal.as_view()),
     path("vendor-list/",VendorList.as_view()),
 
-    path("buy-booking",BuyBooking.as_view()),
-    path("vendor-booked-booking",VendorBookedBooking.as_view()),
-    path("get-all-rides",GetAllRidesBooking.as_view()),
+    path("buy-booking/",BuyBooking.as_view()),
+    path("vendor-booked-booking/",VendorBookedBooking.as_view()),
+    path("get-all-rides/",GetAllRidesBooking.as_view()),
 
 
 
@@ -94,10 +94,10 @@ urlpatterns = [
     path('get-vendors/', VendorListView.as_view()),
     path('create-vendors/', CreateVendorView.as_view()),
     path('vendor-booking/', VendorBookingListView.as_view()),
-    path("buy-booking", BuyBooking.as_view()),
-    path("vendor-booked-booking", VendorBookedBooking.as_view()),
-    path("vendor-driver",VendorDriver.as_view()),
-    path("vendor-cab",VendorCab.as_view()),
+    path("buy-booking/", BuyBooking.as_view()),
+    path("vendor-booked-booking/", VendorBookedBooking.as_view()),
+    path("vendor-driver/",VendorDriver.as_view()),
+    path("vendor-cab/",VendorCab.as_view()),
 
 
 

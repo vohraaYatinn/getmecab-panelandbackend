@@ -44,6 +44,13 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "email", "phone_number", "role", "first_name"]
 
+class DriverOnboardSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Driver
+        fields = ['user', 'aadhaar_number', 'license_number', 'aadhaar_doc', 'license_doc', 'photo', 'vendor']
+
+
 class DriverSerializer(serializers.ModelSerializer):
     user=UserSerializer()
     class Meta:

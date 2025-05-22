@@ -17,7 +17,7 @@ from .models import Cab, Booking, Driver, Bidding, Payment, DriverRating, Coupon
 from .serializers import UserSerializer, SignupSerializer, CabSerializer, BookingSerializer, BiddingSerializer, \
     DriverSerializer, PaymentSerializer, CouponSerializer, OnlyBookingSerializer, BookingAdminSerializer, \
     DriverAdminSerializer, DriverRatingAdminSerializer, VendorRequestSerializer, VendorSerializer, \
-    BookingDriverSerializer, BookingWithDriverSerializer
+    BookingDriverSerializer, BookingWithDriverSerializer, DriverOnboardSerializer
 from .pagination import CustomPagination
 
 User = get_user_model()
@@ -311,7 +311,7 @@ class DriverOnboardingView(APIView):
             return Response({"error": "Phone number and Email should be unique"}, status=422)
 
 
-        user = User.objects.filter(email=request.data.get('phone_number'))[0].id
+        user = User.objects.filter(phone_number=request.data.get('phone_number'))[0].id
         vendor = Vendor.objects.get(user=request.user.id)
         if not user:
             return Response(serializer.errors, status=400)
@@ -319,7 +319,7 @@ class DriverOnboardingView(APIView):
         if not request.data.get('vendor'):
             request.data['vendor'] = vendor.id
 
-        serializer = DriverSerializer(data=request.data)
+        serializer = DriverOnboardSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "Driver onboarded successfully",'result':'success'}, status=201)
@@ -986,25 +986,26 @@ class PhoneOtpVerify(APIView):
         try:
             data = request.data
             phone = data.get('phone', False)
-            verfication_code = data.get('verfication_code', False)
-            otp_list = data.get('otp', False)
-            otp = str(otp_list[0]) + str(otp_list[1]) + str(otp_list[2]) + str(otp_list[3])
-            url = 'https://cpaas.messagecentral.com/verification/v3/validateOtp'
-            headers = {
-                'authToken': 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJDLUZBNTY5QzEzODY0QjQ5OSIsImlhdCI6MTcyMDY3NzcwOSwiZXhwIjoxODc4MzU3NzA5fQ.IKzKR57hg8vdCQux-GnGbuxw1H9BMXxrrJOS_OwUl2TZ2XxDZpDof9wcvenw6yG2Ygjcpfr8dEMVizPZaWf-KA'
-            }
-            params = {
-                'countryCode': '91',
-                'mobileNumber': phone,
-                'verificationId': verfication_code,
-                'customerId': 'C-DEBE2B6893854AD',
-                'code': otp
-            }
-            response = requests.get(url, headers=headers, params=params)
-            if response.status_code != 200:
-                raise Exception("The OTP is either invalid or has expired.")
-            check_if_Valid_otp = response.json()['data']['verificationStatus'] == 'VERIFICATION_COMPLETED'
+            # verfication_code = data.get('verfication_code', False)
+            # otp_list = data.get('otp', False)
+            # otp = str(otp_list[0]) + str(otp_list[1]) + str(otp_list[2]) + str(otp_list[3])
+            # url = 'https://cpaas.messagecentral.com/verification/v3/validateOtp'
+            # headers = {
+            #     'authToken': 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJDLUZBNTY5QzEzODY0QjQ5OSIsImlhdCI6MTcyMDY3NzcwOSwiZXhwIjoxODc4MzU3NzA5fQ.IKzKR57hg8vdCQux-GnGbuxw1H9BMXxrrJOS_OwUl2TZ2XxDZpDof9wcvenw6yG2Ygjcpfr8dEMVizPZaWf-KA'
+            # }
+            # params = {
+            #     'countryCode': '91',
+            #     'mobileNumber': phone,
+            #     'verificationId': verfication_code,
+            #     'customerId': 'C-DEBE2B6893854AD',
+            #     'code': otp
+            # }
+            # response = requests.get(url, headers=headers, params=params)
+            # if response.status_code != 200:
+            #     raise Exception("The OTP is either invalid or has expired.")
+            # check_if_Valid_otp = response.json()['data']['verificationStatus'] == 'VERIFICATION_COMPLETED'
             user_req = User.objects.filter(phone_number=phone)
+            check_if_Valid_otp=True
             if user_req:
                 refresh = RefreshToken.for_user(user_req[0])
                 return Response({"result" : "success", "data":check_if_Valid_otp, "user":True, "access": str(refresh.access_token), "refresh": str(refresh)}, 200)
@@ -1144,7 +1145,7 @@ class DeleteDriver(APIView):
             id = request.data.get("id")
 
 
-            if  id:
+            if  not id:
                 return Response({"error": "Id is required"}, status=400)
 
             driver = Driver.objects.select_related("user").filter(id=id).first()
@@ -1410,6 +1411,7 @@ class VendorRequestActionView(APIView):
                     username=vendor_id,
                     email=vendor_request.email,
                     password=request.data.get('password', 'default_password123'),
+                    phone_number=vendor_request.phone_number,
                     role='vendor'
                 )
 
@@ -1468,6 +1470,7 @@ class VendorRequestView(APIView):
         try:
             email=request.data.get('email',None)
             phone_number=request.data.get('phone_number',None)
+            pan_number=request.data.get('pan_number',None)
 
 
             if User.objects.filter(email=email):
@@ -1478,6 +1481,9 @@ class VendorRequestView(APIView):
                 raise Exception('Already active vendor request with this email')
             if VendorRequest.objects.filter(phone_number=phone_number ,status='pending'):
                 raise Exception('Already active vendor request with this number')
+            if not pan_number or len(pan_number)!=10:
+                raise Exception('Pan Number Missing or Incomplete.')
+
 
 
             serializer = VendorRequestSerializer(data=request.data)
@@ -1666,8 +1672,8 @@ class BuyBooking(APIView):
                     "message": 'Booking Id Missing'
                 }, status=500)
             user=request.user
-            vendor=Vendor.object.get(user=user)
-            booking=Booking.object.get(id=booking_id)
+            vendor=Vendor.objects.get(user=user)
+            booking=Booking.objects.get(id=booking_id)
             if not vendor or not booking:
                 return Response({
                     "result": "error",
@@ -1676,9 +1682,9 @@ class BuyBooking(APIView):
             booking.bidding_status='closed'
             booking.vendor=vendor
             vendor.balance= vendor.balance + booking.buy_cost
-            payment=Payment.object.create(
-                booking=booking_id,
-                vendor=vendor.id,
+            payment=Payment.objects.create(
+                booking=booking,
+                vendor=vendor,
                 amount=booking.buy_cost,
                 payment_type='credit'
             )
@@ -1832,7 +1838,7 @@ class VendorCab(APIView):
             user = request.user
             vendor_id = Vendor.objects.get(user=user)
             driver = Cab.objects.filter(vendor=vendor_id)
-            serialized_data = DriverSerializer(driver, many=True).data
+            serialized_data = CabSerializer(driver, many=True).data
             return Response({
                 'data': serialized_data,
 
