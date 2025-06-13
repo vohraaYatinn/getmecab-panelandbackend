@@ -17,8 +17,8 @@ import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "CabMate - Admin Panel",
-  description: "CabMate - Admin Panel",
+  title: "GetMeCab - Admin Panel",
+  description: "GetMeCab - Admin Panel",
 };
 
 export default function RootLayout({ children }) {

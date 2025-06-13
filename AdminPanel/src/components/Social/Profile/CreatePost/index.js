@@ -278,7 +278,7 @@ const CreatePost = () => {
                 />
               </div>
               <div className="flex-grow-1 ms-2 position-relative top-2">
-                <h6 className="mb-0 fs-14 fw-medium">CabMate Admin</h6>
+                <h6 className="mb-0 fs-14 fw-medium">GetMeCab Admin</h6>
                 <span className="fs-13 text-body">1 day ago</span>
               </div>
             </div>
@@ -388,7 +388,7 @@ const CreatePost = () => {
                 />
               </div>
               <div className="flex-grow-1 ms-2 position-relative top-2">
-                <h6 className="mb-0 fs-14 fw-medium">CabMate Admin</h6>
+                <h6 className="mb-0 fs-14 fw-medium">GetMeCab Admin</h6>
                 <span className="fs-13 text-body">1 day ago</span>
               </div>
             </div>

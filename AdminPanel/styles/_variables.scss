@@ -1,26 +1,26 @@
 // Color
-$body-color: #64748B; 
-$primary: #605DFF; 
-$primary-50: #4936F5; 
-$secondary: #3A4252;
-$info: #2DB6F5; 
+$body-color: #000000;
+$primary: #FFD600;
+$primary-50: #FFD600;
+$secondary: #000000;
+$info: #FFD600;
 $success: #37D80A;
 $success-50: #1E8308;
 $success-60: #25B003;
-$warning: #FFBC2B;
-$danger: #FD5812; 
-$danger-50: #EE3E08; 
-$light: #D5D9E2;
+$warning: #FFD600;
+$danger: #FD5812;
+$danger-50: #EE3E08;
+$light: #FFFFFF;
 $dark: #000000;
 $border-color: #ECEEF2;
-$body-bg: #F6F7F9;
-$primary-div: #AD63F6; 
-$primary-div-50: #9135E8; 
+$body-bg: #FFFFFF;
+$primary-div: #FFD600;
+$primary-div-50: #FFD600;
 $danger-div: #FFCEA9;
 $gray-light: #445164;
-$rating-color: #FE7A36;
-$card-bg-c: #3584FC;
-$card-text-c: #FFE8D4;
+$rating-color: #FFD600;
+$card-bg-c: #FFD600;
+$card-text-c: #000000;
 $gary-light: #F4F6FC;
 $gray-div: #f7f8f7;
 $transition: all ease .5s;
@@ -28,11 +28,11 @@ $box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
 $body-font-family: "Inter", sans-serif;
 
 // For Dark Mode Color
-$dark-body-bg: #0A0E19;
-$dark-body-color: #8695AA;
-$dark-card-bg: #0C1427;
-$dark-input-bg: #15203c;
-$dark-border: #172036;
+$dark-body-bg: #000000;
+$dark-body-color: #FFD600;
+$dark-card-bg: #000000;
+$dark-input-bg: #222222;
+$dark-border: #FFD600;
 
 // Font Size
 $font-size-root: null;

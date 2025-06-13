@@ -79,15 +79,15 @@
             opacity: .5;
         }
         .react-calendar__tile {
-            color: #3A4252;
+            color: #000000;
             font-size: 14px;
       
             &.react-calendar__tile--active {
                 background-color: transparent;
            
                 abbr {
-                    background-color: $primary;
-                    color: #fff !important;
+                    background-color: #FFD600;
+                    color: #000000 !important;
                     border-radius: 100%;
                     padding: 0;
                     width: 30px;
@@ -105,45 +105,45 @@
     .react-calendar {
         .react-calendar__navigation {
             .react-calendar__navigation__prev-button, .react-calendar__navigation__next-button {
-                background-color: $dark-body-bg;
+                background-color: #000000;
             } 
         }
         .react-calendar__month-view__weekdays {
             .react-calendar__month-view__weekdays__weekday {
-                color: #fff;
+                color: #FFD600;
             }
         } 
         .react-calendar__month-view__days {
             .react-calendar__tile {
-                color: #3A4252;
+                color: #FFD600;
             }
         }
     }
     .fc-theme-standard {
         th {
-            background-color: #15203c;
-            color: #fff;
+            background-color: #222222;
+            color: #FFD600;
         }
         .fc-scrollgrid {
-            border: 1px solid #172036;
+            border: 1px solid #FFD600;
         }
         tr {
             th, td {
-                border: 1px solid #172036;
+                border: 1px solid #FFD600;
             }
         }
     }
     .fc {
         .fc-col-header-cell-cushion { 
-            color: #fff;
+            color: #FFD600;
         }
         .fc-daygrid-day-number {
-            color: #fff;
+            color: #FFD600;
         }
     }
     .mantine-1qycoz3 {
-        border: 1px solid $dark-input-bg;
-        background-color: $dark-input-bg;
-        color: #fff;
+        border: 1px solid #FFD600;
+        background-color: #222222;
+        color: #FFD600;
     }
 }

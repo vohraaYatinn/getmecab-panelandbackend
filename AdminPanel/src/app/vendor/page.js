@@ -124,8 +124,6 @@ export default function Page() {
       )}
       <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
         <h3 className="mb-0">Vendor Management</h3>
-       
-       
         <Breadcrumb className="breadcrumb-page-list align-items-center mb-0 lh-1">
           <Breadcrumb.Item href="/dashboard/ecommerce/">
             <div className="d-flex align-items-center text-decoration-none">
@@ -133,7 +131,6 @@ export default function Page() {
               <span className="text-secondary fw-medium hover">Dashboard</span>
             </div>
           </Breadcrumb.Item>
-
           <Breadcrumb.Item active>
             <span className="fw-medium">Vendor Management</span>
           </Breadcrumb.Item>
@@ -141,13 +138,9 @@ export default function Page() {
       </div>
       <Card className="bg-white border-0 rounded-3 mb-4">
         <Card.Body className="p-0">
-          <Tab.Container activeKey={activeTab} onSelect={handleTabChange}>
-          <div className="row">
-          <Button variant="primary" onClick={() => setShowModal(true)} className="border-0 rounded-0">
-              Create Vendor
-            </Button>
-            <Nav variant="pills" className="border-bottom px-4">
-             
+          {/* Header row with button and tabs */}
+          <div className="d-flex justify-content-between align-items-center px-4 pt-4 pb-2 border-bottom flex-wrap gap-2">
+            <Nav variant="pills" className="border-0">
               <Nav.Item>
                 <Nav.Link eventKey="requests" className="border-0 rounded-0">
                   Vendor Requests
@@ -159,9 +152,17 @@ export default function Page() {
                 </Nav.Link>
               </Nav.Item>
             </Nav>
-
-            </div>
-
+            <Button
+              variant="primary"
+              onClick={() => setShowModal(true)}
+              className="d-flex align-items-center gap-2 px-4 py-2 fw-semibold rounded-pill shadow-sm"
+              style={{ fontSize: '1rem' }}
+            >
+              <i className="ri-add-line" style={{ fontSize: '1.3rem' }}></i>
+              Create Vendor
+            </Button>
+          </div>
+          <Tab.Container activeKey={activeTab} onSelect={handleTabChange}>
             <Tab.Content>
               <Tab.Pane eventKey="requests" key={`requests-${key}`}>
                 <VendorRequests activeTab={activeTab}/>
