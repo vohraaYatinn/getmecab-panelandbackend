@@ -52,7 +52,7 @@ const CreateInvoice = () => {
               <Col sm={6} lg={3}>
                 <div className="mb-0 border p-4 rounded-3 position-relative">
                   <p className="mb-4 text-secondary fw-medium">From:</p>
-                  <p className="mb-1 fw-medium text-secondary">CabMate Admin</p>
+                  <p className="mb-1 fw-medium text-secondary">GetMeCab Admin</p>
                   <p className="mb-1 text-body">Admin@trezo.com</p>
                   <p className="mb-1 text-body">
                     4545 Seth Street Ballinger, TX 78965

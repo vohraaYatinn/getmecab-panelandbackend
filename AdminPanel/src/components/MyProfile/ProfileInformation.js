@@ -17,7 +17,7 @@ const ProfileInformation = () => {
 
             <li className="d-flex align-items-center mb-2 pb-1">
               <span>Full Name:</span>
-              <span className="text-secondary fw-medium ms-1">CabMate Admin</span>
+              <span className="text-secondary fw-medium ms-1">GetMeCab Admin</span>
             </li>
 
             <li className="d-flex align-items-center mb-2 pb-1">

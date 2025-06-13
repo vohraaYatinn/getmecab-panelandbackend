@@ -38,7 +38,7 @@ const Logout = () => {
                 />
               </div>
 
-              <h3 className="fs-28 mb-2">Welcome back to CabMate!</h3>
+              <h3 className="fs-28 mb-2">Welcome back to GetMeCab!</h3>
               <p className="fw-medium fs-16 mb-4">You Are Logged out</p>
 
         

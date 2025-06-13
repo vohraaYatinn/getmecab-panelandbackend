@@ -21,7 +21,7 @@ const ProfileIntro = () => {
               />
             </div>
             <div className="flex-grow-1 ms-3">
-              <h4 className="fs-17 mb-1 fw-semibold">CabMate Admin</h4>
+              <h4 className="fs-17 mb-1 fw-semibold">GetMeCab Admin</h4>
               <span className="fs-14">Super Admin</span>
             </div>
           </div>

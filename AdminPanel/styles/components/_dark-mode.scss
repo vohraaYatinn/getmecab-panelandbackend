@@ -386,24 +386,24 @@
     .default-table-area {
         .table-responsive {
             .table {
-                border-color: $dark-border;
+                border-color: #FFD600;
                 thead {
                     tr {
                         th {
-                            background-color: $dark-input-bg;
-                            color: $white;
-                            border-color: $dark-border;
+                            background-color: #222222;
+                            color: #FFD600;
+                            border-color: #FFD600;
                         }
                     }
                 }
                 tbody {
                     tr {
                         td {
-                            color: $dark-body-color;
-                            border-color: $dark-border;
+                            color: #FFD600;
+                            border-color: #FFD600;
                             a {
                                 h6 {
-                                    color: $white;
+                                    color: #FFD600;
                                 }
                             }
                         }
@@ -412,7 +412,7 @@
             }
         }
         .showing-wrap {
-            border-color: $dark-border;
+            border-color: #FFD600;
         }
 
         &.agents-performance-overview {
@@ -422,8 +422,8 @@
                         tbody {
                             tr {
                                 td {
-                                    border-top: 10px solid $dark-card-bg;
-                                    background-color: $dark-input-bg;
+                                    border-top: 10px solid #000000;
+                                    background-color: #222222;
                                 }
                             }
                         }
@@ -435,20 +435,23 @@
     .pagination {
         .page-item {
             .page-link {
-                background: $dark-input-bg;
-                border-color: $dark-input-bg;
-                color: $white;
+                background: #222222;
+                border-color: #FFD600;
+                color: #FFD600;
                 &.active {
-                    background-color: $primary;
+                    background-color: #FFD600;
+                    color: #000000;
                 }
                 &:hover {
-                    background-color: $primary;
+                    background-color: #FFD600;
+                    color: #000000;
                 }
             }
         }
     }
     .footer-area {
-        background-color: $dark-card-bg !important;
+        background-color: #000000 !important;
+        color: #FFD600;
     }
     .apexcharts-text.apexcharts-datalabel-value {
         fill: #fff !important;
