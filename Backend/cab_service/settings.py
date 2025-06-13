@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-#6khorr!@rflw245_xwehsb6!_nertl!_z$^))5#9zo)it7z_!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.29.96", "127.0.0.1"]
+ALLOWED_HOSTS = ["192.168.29.96", "127.0.0.1", "69.62.75.228"]
 AUTH_USER_MODEL = 'cab_users.User'
 
 CSRF_TRUSTED_ORIGINS = [
