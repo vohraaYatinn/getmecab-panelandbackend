@@ -5056,8 +5056,8 @@ textarea.form-control-lg {
 
 .nav-pills {
   --bs-nav-pills-border-radius: var(--bs-border-radius);
-  --bs-nav-pills-link-active-color: #fff;
-  --bs-nav-pills-link-active-bg: #605DFF;
+  --bs-nav-pills-link-active-color: #000000;
+  --bs-nav-pills-link-active-bg: #ffd602;
 }
 .nav-pills .nav-link {
   border-radius: var(--bs-nav-pills-border-radius);
